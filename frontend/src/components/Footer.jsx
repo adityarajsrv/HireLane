@@ -31,7 +31,7 @@ const Footer = () => (
             <a
               key={l.label}
               href={l.href}
-              className="text-[13px] text-gray-400 transition-colors duration-150 hover:text-gray-800"
+              className="text-[13px] text-gray-400 transition-colors duration-150 hover:text-[#602fe2]"
             >
               {l.label}
             </a>
@@ -39,7 +39,7 @@ const Footer = () => (
         </nav>
         <p className="text-[12px] text-gray-400 md:text-right">
           Made with{" "}
-          <span className="text-gray-600 font-medium">frustration</span> by job
+          <span className="text-[#602fe2] font-medium">frustration</span> by job
           seekers.
         </p>
       </div>
