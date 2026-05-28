@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-@theme {
+:root {
   --font-sans: 'Bricolage Grotesque', sans-serif;
   --font-serif: 'Instrument Serif', serif;
   --font-mono: 'JetBrains Mono', monospace;
