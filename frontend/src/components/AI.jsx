@@ -230,10 +230,31 @@ function Bullet({ icon, title, desc, delay, active }) {
 
 const AI = () => {
   const [sectionRef, inView] = useInView(0.35);
+  const [mouse, setMouse] = useState({ x: -999, y: -999 });
+  const frame = useRef(null);
+
+  const handleMouseMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    cancelAnimationFrame(frame.current);
+
+    frame.current = requestAnimationFrame(() => {
+      setMouse({ x, y });
+    });
+  };
+  const handleMouseLeave = () => setMouse({ x: -999, y: -999 });
+  useEffect(() => {
+    return () => cancelAnimationFrame(frame.current);
+  }, []);
 
   return (
     <section
       ref={sectionRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
       className="relative overflow-hidden bg-[#0a0a0a] h-150 px-12 py-20 flex items-center"
     >
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -259,10 +280,34 @@ const AI = () => {
           }}
         />
         <div
-          className="absolute inset-0"
+          className="pointer-events-none absolute inset-0 transition-opacity duration-300"
           style={{
-            background:
-              "linear-gradient(to bottom, rgba(10,10,10,0.15), rgba(10,10,10,0.65))",
+            backgroundImage: `
+      linear-gradient(to right, rgba(91,61,245,0.9) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(91,61,245,0.9) 1px, transparent 1px)
+    `,
+            backgroundSize: "56px 56px",
+            opacity: mouse.x === -999 ? 0 : 0.22,
+            transform: "translateZ(0)",
+            willChange: "mask-image, -webkit-mask-image",
+            WebkitMaskImage: `
+      radial-gradient(
+        circle 240px at ${mouse.x}px ${mouse.y}px,
+        rgba(0,0,0,1) 0%,
+        rgba(0,0,0,0.9) 35%,
+        rgba(0,0,0,0.45) 60%,
+        transparent 100%
+      )
+    `,
+            maskImage: `
+      radial-gradient(
+        circle 240px at ${mouse.x}px ${mouse.y}px,
+        rgba(0,0,0,1) 0%,
+        rgba(0,0,0,0.9) 35%,
+        rgba(0,0,0,0.45) 60%,
+        transparent 100%
+      )
+    `,
           }}
         />
       </div>
