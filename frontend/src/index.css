@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Bricolage Grotesque', sans-serif;
+  --font-serif: 'Instrument Serif', serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --text-eyebrow: 11px;
+  --tracking-eyebrow: 0.16em;
+}
+
+@keyframes ticker {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.ticker {
+  animation: ticker 26s linear infinite;
+  will-change: transform;
+}
+
+.ticker:hover {
+  animation-play-state: paused;
+}
+
+@keyframes shine {
+  0% {
+    transform: translateX(-40px);
+  }
+
+  100% {
+    transform: translateX(140px);
+  }
+}
