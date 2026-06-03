@@ -451,7 +451,7 @@ const RightPanel = () => {
           </div>
           <div className="h-1 rounded-full bg-gray-100 overflow-hidden">
             <div
-              className="h-full rounded-full transition-all duration-[2000ms]"
+              className="h-full rounded-full transition-all duration-2000"
               style={{
                 width: "100%",
                 background: "linear-gradient(90deg,#5b3df5,#1bd29c)",
@@ -600,7 +600,7 @@ export default function AuthPage() {
         }}
       >
         {/* ── Left: Form ── */}
-        <div className="w-[380px] shrink-0 flex flex-col px-8 py-7">
+        <div className="w-95 shrink-0 flex flex-col px-8 py-7">
           {/* Brand */}
           <div className="flex items-center mb-4 gap-2 font-bold cursor-pointer transition-transform duration-300 hover:scale-105">
             <img src={logo} alt="" className="w-10 h-10" />
@@ -612,7 +612,7 @@ export default function AuthPage() {
 
           {/* Tab switcher */}
           <div
-            className="flex p-[3px] mb-5 rounded-[10px]"
+            className="flex p-0.75 mb-5 rounded-[10px]"
             style={{ background: "#f4f4f8", border: "1px solid #ebebf2" }}
           >
             {[
@@ -622,7 +622,7 @@ export default function AuthPage() {
               <button
                 key={k}
                 onClick={() => reset(k)}
-                className="flex-1 py-[6px] text-[12.5px] font-medium rounded-[8px] transition-all cursor-pointer border"
+                className="flex-1 py-1.5 text-[12.5px] font-medium rounded-lg transition-all cursor-pointer border"
                 style={{
                   background: tab === k ? "#fff" : "transparent",
                   color: tab === k ? "#111" : "#aaa",
