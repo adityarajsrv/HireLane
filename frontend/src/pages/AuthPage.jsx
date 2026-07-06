@@ -21,8 +21,7 @@ const AnimatedBg = () => {
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
-    let animId,
-      t = 0;
+    let animId, t = 0;
 
     const resize = () => {
       canvas.width = canvas.offsetWidth;
@@ -34,62 +33,32 @@ const AnimatedBg = () => {
     const W = () => canvas.width;
     const H = () => canvas.height;
 
-    // ── Field labels drifting across bg
     const FIELD_LABELS = [
-      "First Name",
-      "Last Name",
-      "Email",
-      "Phone",
-      "LinkedIn",
-      "GitHub",
-      "Experience",
-      "Skills",
-      "Location",
-      "Salary",
-      "Notice Period",
-      "Resume",
-      "Work Auth",
-      "Portfolio",
-      "Cover Letter",
+      "First Name", "Email", "LinkedIn",
+      "GitHub", "Skills", "Resume",
+      "Location", "Experience", "Portfolio", "Salary",
     ];
+
     const floaters = FIELD_LABELS.map((text) => ({
       text,
       x: Math.random() * 1400,
       y: Math.random() * 900,
-      vx: (Math.random() - 0.5) * 0.22,
-      vy: (Math.random() - 0.5) * 0.14,
-      alpha: 0.04 + Math.random() * 0.07,
+      vx: (Math.random() - 0.5) * 0.14,
+      vy: (Math.random() - 0.5) * 0.09,
+      alpha: 0.032 + Math.random() * 0.042,
       phase: Math.random() * Math.PI * 2,
-      filled: Math.random() > 0.38,
-      size: 9 + Math.random() * 2,
+      filled: Math.random() > 0.42,
+      size: 9 + Math.random() * 1,
     }));
 
-    // ── Connection nodes (cache layer metaphor)
-    const nodes = Array.from({ length: 22 }, (_, i) => ({
+    const nodes = Array.from({ length: 14 }, (_, i) => ({
       x: Math.random() * 1400,
       y: Math.random() * 900,
-      vx: (Math.random() - 0.5) * 0.28,
-      vy: (Math.random() - 0.5) * 0.28,
-      r: 1.5 + Math.random() * 2.5,
+      vx: (Math.random() - 0.5) * 0.18,
+      vy: (Math.random() - 0.5) * 0.18,
+      r: 1.2 + Math.random() * 2,
       phase: Math.random() * Math.PI * 2,
       color: ["91,61,245", "27,210,156", "127,119,221"][i % 3],
-    }));
-
-    // ── ATS form mockup cards (static, subtle)
-    const cards = [
-      { x: 0.08, y: 0.12, w: 160, h: 90, label: "Greenhouse", fields: 3 },
-      { x: 0.78, y: 0.08, w: 160, h: 90, label: "Workday", fields: 5 },
-      { x: 0.04, y: 0.72, w: 160, h: 90, label: "Lever", fields: 4 },
-      { x: 0.82, y: 0.74, w: 160, h: 90, label: "Internshala", fields: 3 },
-    ];
-
-    // ── Travelling data packets along node edges
-    const packets = Array.from({ length: 8 }, () => ({
-      progress: Math.random(),
-      speed: 0.003 + Math.random() * 0.004,
-      fromIdx: Math.floor(Math.random() * 22),
-      toIdx: Math.floor(Math.random() * 22),
-      color: Math.random() > 0.5 ? "91,61,245" : "27,210,156",
     }));
 
     const drawRoundRect = (x, y, w, h, r) => {
@@ -107,73 +76,31 @@ const AnimatedBg = () => {
     };
 
     const draw = () => {
-      const w = W(),
-        h = H();
+      const w = W(), h = H();
       ctx.clearRect(0, 0, w, h);
 
-      // Grid
+      // ── Grid ─────────────────────────────────────────────
+      // Visible enough to feel structured, not enough to feel heavy
       ctx.lineWidth = 0.5;
-      ctx.strokeStyle = "rgba(91,61,245,0.045)";
-      const gs = 52;
+      ctx.strokeStyle = "rgba(91,61,245,0.038)";
+      const gs = 54;
       for (let x = 0; x < w; x += gs) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, h);
-        ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
       }
       for (let y = 0; y < h; y += gs) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(w, y);
-        ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
       }
 
-      // ATS card outlines
-      cards.forEach((c) => {
-        const cx = c.x * w,
-          cy = c.y * h;
-        const a = 0.06 + 0.02 * Math.sin(t * 0.006 + cx);
-        drawRoundRect(cx, cy, c.w, c.h, 8);
-        ctx.strokeStyle = `rgba(91,61,245,${a})`;
-        ctx.lineWidth = 0.8;
-        ctx.stroke();
-        drawRoundRect(cx, cy, c.w, c.h, 8);
-        ctx.fillStyle = `rgba(91,61,245,${a * 0.3})`;
-        ctx.fill();
-
-        // ATS label
-        ctx.font = "500 9px 'JetBrains Mono', monospace";
-        ctx.fillStyle = `rgba(91,61,245,${a * 5})`;
-        ctx.fillText(c.label, cx + 10, cy + 16);
-
-        // Fake input rows inside card
-        for (let i = 0; i < c.fields; i++) {
-          const fy = cy + 26 + i * 16;
-          const fillProgress = Math.min(
-            1,
-            Math.max(0, Math.sin(t * 0.012 - i * 0.8) * 0.5 + 0.5),
-          );
-          // track
-          drawRoundRect(cx + 10, fy, c.w - 20, 9, 2);
-          ctx.fillStyle = `rgba(91,61,245,${a * 1.2})`;
-          ctx.fill();
-          // fill bar
-          drawRoundRect(cx + 10, fy, (c.w - 20) * fillProgress, 9, 2);
-          ctx.fillStyle = `rgba(27,210,156,${a * 4 * fillProgress})`;
-          ctx.fill();
-        }
-      });
-
-      // Node connections
+      // ── Node connections ──────────────────────────────────
       for (let i = 0; i < nodes.length; i++) {
         for (let j = i + 1; j < nodes.length; j++) {
           const dx = nodes[i].x - nodes[j].x;
           const dy = nodes[i].y - nodes[j].y;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 180) {
+          if (dist < 150) {
             ctx.beginPath();
-            ctx.strokeStyle = `rgba(91,61,245,${0.07 * (1 - dist / 180)})`;
-            ctx.lineWidth = 0.7;
+            ctx.strokeStyle = `rgba(91,61,245,${0.055 * (1 - dist / 150)})`;
+            ctx.lineWidth = 0.6;
             ctx.moveTo(nodes[i].x, nodes[i].y);
             ctx.lineTo(nodes[j].x, nodes[j].y);
             ctx.stroke();
@@ -181,113 +108,60 @@ const AnimatedBg = () => {
         }
       }
 
-      // Nodes
+      // ── Nodes ─────────────────────────────────────────────
       nodes.forEach((n) => {
-        const pulse = 0.35 + 0.65 * Math.abs(Math.sin(t * 0.009 + n.phase));
+        const pulse = 0.28 + 0.45 * Math.abs(Math.sin(t * 0.007 + n.phase));
         ctx.beginPath();
         ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${n.color},${pulse * 0.6})`;
+        ctx.fillStyle = `rgba(${n.color},${pulse})`;
         ctx.fill();
+
+        // one soft outer ring — adds depth without being loud
         ctx.beginPath();
-        ctx.arc(n.x, n.y, n.r + 3.5, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(${n.color},${pulse * 0.12})`;
-        ctx.lineWidth = 1;
+        ctx.arc(n.x, n.y, n.r + 2.5, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(${n.color},${pulse * 0.1})`;
+        ctx.lineWidth = 0.8;
         ctx.stroke();
-        n.x += n.vx;
-        n.y += n.vy;
+
+        n.x += n.vx; n.y += n.vy;
         if (n.x < 0 || n.x > w) n.vx *= -1;
         if (n.y < 0 || n.y > h) n.vy *= -1;
       });
 
-      // Data packets travelling between nodes
-      packets.forEach((p) => {
-        const from = nodes[p.fromIdx % nodes.length];
-        const to = nodes[p.toIdx % nodes.length];
-        const px = from.x + (to.x - from.x) * p.progress;
-        const py = from.y + (to.y - from.y) * p.progress;
-        ctx.beginPath();
-        ctx.arc(px, py, 2.2, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${p.color},0.7)`;
-        ctx.fill();
-        // trailing glow
-        const tx2 = from.x + (to.x - from.x) * Math.max(0, p.progress - 0.06);
-        const ty2 = from.y + (to.y - from.y) * Math.max(0, p.progress - 0.06);
-        const grad = ctx.createLinearGradient(tx2, ty2, px, py);
-        grad.addColorStop(0, `rgba(${p.color},0)`);
-        grad.addColorStop(1, `rgba(${p.color},0.35)`);
-        ctx.beginPath();
-        ctx.strokeStyle = grad;
-        ctx.lineWidth = 1.2;
-        ctx.moveTo(tx2, ty2);
-        ctx.lineTo(px, py);
-        ctx.stroke();
-        p.progress += p.speed;
-        if (p.progress > 1) {
-          p.progress = 0;
-          p.fromIdx = Math.floor(Math.random() * nodes.length);
-          p.toIdx = Math.floor(Math.random() * nodes.length);
-        }
-      });
-
-      // Floating field label pills
+      // ── Field label pills ─────────────────────────────────
       ctx.textBaseline = "middle";
       floaters.forEach((f) => {
-        const a = f.alpha * (0.75 + 0.25 * Math.sin(t * 0.007 + f.phase));
-        ctx.font = `500 ${f.size}px 'JetBrains Mono', monospace`;
+        const a = f.alpha * (0.78 + 0.22 * Math.sin(t * 0.005 + f.phase));
+        ctx.font = `400 ${f.size}px 'JetBrains Mono', monospace`;
         const tw = ctx.measureText(f.text).width;
-        const pw = tw + (f.filled ? 30 : 14),
-          ph = 16;
-        const px = f.x,
-          py = f.y;
+        const pw = tw + (f.filled ? 26 : 14);
+        const ph = 16;
 
-        drawRoundRect(px - 4, py - ph / 2, pw, ph, 4);
+        drawRoundRect(f.x - 4, f.y - ph / 2, pw, ph, 3);
         ctx.fillStyle = f.filled
-          ? `rgba(27,210,156,${a * 0.22})`
-          : `rgba(91,61,245,${a * 0.16})`;
+          ? `rgba(27,210,156,${a * 0.18})`
+          : `rgba(91,61,245,${a * 0.13})`;
         ctx.fill();
+
         ctx.strokeStyle = f.filled
-          ? `rgba(27,210,156,${a * 0.45})`
-          : `rgba(91,61,245,${a * 0.32})`;
-        ctx.lineWidth = 0.5;
+          ? `rgba(27,210,156,${a * 0.35})`
+          : `rgba(91,61,245,${a * 0.25})`;
+        ctx.lineWidth = 0.45;
         ctx.stroke();
 
         ctx.fillStyle = f.filled
-          ? `rgba(15,110,86,${a * 4})`
-          : `rgba(60,52,137,${a * 4})`;
-        ctx.fillText(f.text, px, py);
+          ? `rgba(15,110,86,${a * 3.2})`
+          : `rgba(60,52,137,${a * 3.2})`;
+        ctx.fillText(f.text, f.x, f.y);
 
         if (f.filled) {
-          ctx.fillStyle = `rgba(27,210,156,${a * 4})`;
-          ctx.fillText("✓", px + tw + 5, py);
+          ctx.fillStyle = `rgba(27,210,156,${a * 3.2})`;
+          ctx.fillText("✓", f.x + tw + 4, f.y);
         }
 
-        f.x += f.vx;
-        f.y += f.vy;
-        if (f.x < -100 || f.x > w + 100) f.vx *= -1;
-        if (f.y < 20 || f.y > h + 20) f.vy *= -1;
-      });
-
-      // Horizontal scanner sweep
-      const sweep = ((t * 0.35) % (h + 60)) - 30;
-      const sg = ctx.createLinearGradient(0, sweep - 28, 0, sweep + 28);
-      sg.addColorStop(0, "rgba(91,61,245,0)");
-      sg.addColorStop(0.4, "rgba(91,61,245,0.03)");
-      sg.addColorStop(0.5, "rgba(27,210,156,0.05)");
-      sg.addColorStop(0.6, "rgba(91,61,245,0.03)");
-      sg.addColorStop(1, "rgba(91,61,245,0)");
-      ctx.fillStyle = sg;
-      ctx.fillRect(0, sweep - 28, w, 56);
-
-      // Diagonal accent lines (like a circuit board)
-      ctx.lineWidth = 0.4;
-      [0.2, 0.5, 0.8].forEach((xf, i) => {
-        const lx = xf * w;
-        const a = 0.04 + 0.02 * Math.sin(t * 0.005 + i * 2);
-        ctx.strokeStyle = `rgba(91,61,245,${a})`;
-        ctx.beginPath();
-        ctx.moveTo(lx, 0);
-        ctx.lineTo(lx + 80, h);
-        ctx.stroke();
+        f.x += f.vx; f.y += f.vy;
+        if (f.x < -80 || f.x > w + 80) f.vx *= -1;
+        if (f.y < 20   || f.y > h + 20)  f.vy *= -1;
       });
 
       t++;
