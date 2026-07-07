@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { useState, useEffect, useRef } from "react";
 import {
   Eye,
@@ -14,6 +15,8 @@ import {
   TrendingUp,
 } from "lucide-react";
 import logo from "../assets/logo.png";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext.jsx";
 
 const AnimatedBg = () => {
   const canvasRef = useRef(null);
@@ -21,7 +24,8 @@ const AnimatedBg = () => {
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
-    let animId, t = 0;
+    let animId,
+      t = 0;
 
     const resize = () => {
       canvas.width = canvas.offsetWidth;
@@ -34,9 +38,16 @@ const AnimatedBg = () => {
     const H = () => canvas.height;
 
     const FIELD_LABELS = [
-      "First Name", "Email", "LinkedIn",
-      "GitHub", "Skills", "Resume",
-      "Location", "Experience", "Portfolio", "Salary",
+      "First Name",
+      "Email",
+      "LinkedIn",
+      "GitHub",
+      "Skills",
+      "Resume",
+      "Location",
+      "Experience",
+      "Portfolio",
+      "Salary",
     ];
 
     const floaters = FIELD_LABELS.map((text) => ({
@@ -76,7 +87,8 @@ const AnimatedBg = () => {
     };
 
     const draw = () => {
-      const w = W(), h = H();
+      const w = W(),
+        h = H();
       ctx.clearRect(0, 0, w, h);
 
       // ── Grid ─────────────────────────────────────────────
@@ -85,10 +97,16 @@ const AnimatedBg = () => {
       ctx.strokeStyle = "rgba(91,61,245,0.038)";
       const gs = 54;
       for (let x = 0; x < w; x += gs) {
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+        ctx.stroke();
       }
       for (let y = 0; y < h; y += gs) {
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
       }
 
       // ── Node connections ──────────────────────────────────
@@ -123,7 +141,8 @@ const AnimatedBg = () => {
         ctx.lineWidth = 0.8;
         ctx.stroke();
 
-        n.x += n.vx; n.y += n.vy;
+        n.x += n.vx;
+        n.y += n.vy;
         if (n.x < 0 || n.x > w) n.vx *= -1;
         if (n.y < 0 || n.y > h) n.vy *= -1;
       });
@@ -159,9 +178,10 @@ const AnimatedBg = () => {
           ctx.fillText("✓", f.x + tw + 4, f.y);
         }
 
-        f.x += f.vx; f.y += f.vy;
+        f.x += f.vx;
+        f.y += f.vy;
         if (f.x < -80 || f.x > w + 80) f.vx *= -1;
-        if (f.y < 20   || f.y > h + 20)  f.vy *= -1;
+        if (f.y < 20 || f.y > h + 20) f.vy *= -1;
       });
 
       t++;
@@ -423,6 +443,8 @@ const InputField = ({
 
 // ── Auth Page ─────────────────────────────────────────────────────────────────
 export default function AuthPage() {
+  const navigate = useNavigate();
+  const { login, register } = useAuth();
   const [tab, setTab] = useState("login");
   const [showPass, setShowPass] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -431,7 +453,7 @@ export default function AuthPage() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
-
+  const [error, setError] = useState("");
   const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const hasLength = password.length >= 8;
   const hasSpecial = /[0-9!@#$%^&*]/.test(password);
@@ -448,10 +470,28 @@ export default function AuthPage() {
     setShowConfirm(false);
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e) => {
+   e.preventDefault();
+    setError("");
     setLoading(true);
-    setTimeout(() => setLoading(false), 1800);
+
+     try {
+      if (isSignup) {
+        // Basic client-side validation before hitting the server
+        if (password !== confirm) {
+          setError("Passwords do not match.");
+          return;
+        }
+        await register(name, email, password);
+      } else {
+        await login(email, password);
+      }
+      navigate("/dashboard");
+    }catch(err){
+      setError(err.response?.data?.message || "Something went wrong. Please try again.");
+    }finally{
+      setLoading(false);
+    }
   };
 
   return (

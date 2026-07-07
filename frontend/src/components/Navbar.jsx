@@ -2,9 +2,11 @@ import { useEffect, useState } from "react";
 import { FaChrome } from "react-icons/fa";
 import logo from "../assets/logo.png";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext.jsx";
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
+  const { user, isAuthenticated, logout } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -45,18 +47,48 @@ const Navbar = () => {
           ))}
         </div>
         <div className="hidden md:flex items-center gap-4">
-          <button
-            onClick={() => navigate("/auth")}
-            className="cursor-pointer text-gray-700 transition-colors duration-300 hover:text-[#602fe2]"
-          >
-            Sign In
-          </button>
-          <button className="cursor-pointer group rounded-full bg-[#602fe2] px-6 py-2 text-white transition-all duration-300 hover:scale-105 hover:bg-[#4f24c9] hover:shadow-lg">
-            <span className="flex items-center gap-2">
-              Add to Chrome
-              <FaChrome className="transition-transform duration-300 group-hover:rotate-12" />
-            </span>
-          </button>
+          {isAuthenticated ? (
+            <>
+              <button
+                onClick={() => navigate("/dashboard")}
+                className="flex items-center gap-3 rounded-full border border-gray-200 bg-white px-4 py-2 transition-all hover:border-[#602fe2] hover:shadow-md"
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#602fe2] text-sm font-semibold text-white">
+                  {user?.name?.charAt(0).toUpperCase()}
+                </div>
+
+                <div className="text-left leading-tight">
+                  <p className="text-sm font-semibold text-gray-900">
+                    {user?.name}
+                  </p>
+                  <p className="text-xs text-gray-500">Dashboard</p>
+                </div>
+              </button>
+
+              <button
+                onClick={logout}
+                className="cursor-pointer rounded-full border border-red-200 px-4 py-2 text-sm font-medium text-red-500 transition hover:bg-red-50"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => navigate("/auth")}
+                className="cursor-pointer text-gray-700 transition-colors hover:text-[#602fe2]"
+              >
+                Sign In
+              </button>
+
+              <button className="cursor-pointer group rounded-full bg-[#602fe2] px-6 py-2 text-white transition-all duration-300 hover:scale-105 hover:bg-[#4f24c9] hover:shadow-lg">
+                <span className="flex items-center gap-2">
+                  Add to Chrome
+                  <FaChrome className="transition-transform duration-300 group-hover:rotate-12" />
+                </span>
+              </button>
+            </>
+          )}
         </div>
       </nav>
     </header>

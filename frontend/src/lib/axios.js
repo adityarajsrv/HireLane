@@ -1,0 +1,71 @@
+import axios from "axios";
+import env from "../config/env.js";
+
+const api = axios.create({
+    baseURL: env.VITE_API_URL,
+    withCredentials: true,
+    headers: {
+        'Content-Type': 'application/json',
+    }
+})
+
+api.interceptors.request.use(
+    (config) => {
+        return config;
+    },
+    (error) => Promise.reject(error)
+)
+
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error) => {
+    failedQueue.forEach((prom) => {
+        if (error) {
+            prom.reject(error);
+        } else {
+            prom.resolve();
+        }
+    })
+    failedQueue = [];
+}
+
+api.interceptors.response.use(
+    (response) => response,
+
+    async (error) => {
+        const originalRequest = error.config;
+
+        if (
+            error.response?.status === 401 &&
+            error.response?.data?.code === "TOKEN_EXPIRED" &&
+            !originalRequest._retry
+        ) {
+            if (isRefreshing) {
+                return new Promise((resolve, reject) => {
+                    failedQueue.push({ resolve, reject });
+                })
+                    .then(() => api(originalRequest))
+                    .catch((err) => Promise.reject(err));
+            }
+
+            originalRequest._retry = true;
+            isRefreshing = true;
+
+            try {
+                await api.post("/auth/refresh");
+                processQueue(null);
+                return api(originalRequest);
+            } catch (refreshError) {
+                processQueue(refreshError);
+                window.location.href = "/login";
+                return Promise.reject(refreshError);
+            } finally {
+                isRefreshing = false;
+            }
+        }
+        return Promise.reject(error);
+    }
+)
+
+export default api;
