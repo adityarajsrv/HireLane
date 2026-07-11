@@ -90,6 +90,10 @@ router.post("/login", async (req, res) => {
 
         const user = await User.findOne({ email: email.toLowerCase() }).select("+password");
 
+        console.log("User found:", !!user);
+        console.log("Provider:", user?.provider);
+        console.log("Has password:", !!user?.password);
+
         if (!user) {
             return res.status(401).json({ success: false, message: "Invalid credentials." });
         }
@@ -102,12 +106,15 @@ router.post("/login", async (req, res) => {
         }
 
         const isMatch = await user.comparePassword(password);
+        console.log("Password match:", isMatch);
+
         if (!isMatch) {
             return res.status(401).json({ success: false, message: "Invalid credentials." });
         }
 
-        user.lastLoginAt = new Date();
-        await user.save({ validateBeforeSave: false });
+        await User.findByIdAndUpdate(user._id, {
+            lastLoginAt: new Date(),
+        });
 
         await issueSession(res, user, req);
 
@@ -190,5 +197,6 @@ router.post("/logout-all", protect, async (req, res) => {
 
     res.json({ success: true, message: "Logged out from all devices." });
 });
+
 
 export default router;

@@ -58,9 +58,11 @@ const userSchema = new mongoose.Schema(
 );
 
 userSchema.pre("save", async function (next) {
-    if (!this.isModified("password"));
+    if (!this.isModified("password")) return;
     if (!this.password) return;
 
+    if (this.password.startsWith("$2b$") || this.password.startsWith("$2a$")) return;
+    
     this.password = await bcrypt.hash(this.password, 12);
 })
 
