@@ -1,0 +1,136 @@
+import express from "express";
+import Profile from "../models/Profile.js";
+import { protect } from "../middlewares/authMiddleware.js";
+import upload from "../config/multer.js";
+import { extractTextFromPDF } from "../services/pdf.js";
+import { parseResume } from "../services/gemini.js";
+
+const router = express.Router();
+
+router.use(protect);
+
+router.get('/', async (req, res) => {
+    try {
+        const profile = await Profile.findOne({ userId: req.user._id });
+
+        if (!profile) {
+            return res.json({
+                success: true,
+                profile: null,
+                isNew: true,
+            })
+        }
+        res.json({ success: true, profile });
+    } catch (err) {
+        console.error("Get profile error:", err);
+        res.status(500).json({ success: false, message: "Failed to fetch profile" });
+    }
+})
+
+router.put("/", async (req, res) => {
+    try {
+        const {
+            firstName, lastName, phone, location,
+            linkedin, github, portfolio,
+            workAuth, expectedSalary, noticePeriod,
+            targetRoles, skills,
+        } = req.body;
+
+        const updateData = {
+            firstName: firstName ?? "",
+            lastName: lastName ?? "",
+            phone: phone ?? "",
+            location: location ?? "",
+            linkedin: linkedin ?? "",
+            github: github ?? "",
+            portfolio: portfolio ?? "",
+            workAuth: workAuth ?? "",
+            expectedSalary: expectedSalary ?? 0,
+            noticePeriod: noticePeriod ?? "",
+            targetRoles: targetRoles ?? [],
+            skills: skills ?? [],
+        };
+
+        const profile = await Profile.findOneAndUpdate(
+            { userId: req.user._id },
+            { $set: updateData },
+            { returnDocument: "after", upsert: true, runValidators: true }
+        );
+        res.json({ success: true, profile });
+    } catch (err) {
+        if (err.name === "ValidationError") {
+            const messages = Object.values(err.errors).map((e) => e.message);
+            return res.status(400).json({ success: false, message: messages.join(". ") });
+        }
+        console.error("Update profile error:", err);
+        res.status(500).json({ success: false, message: "Failed to update profile." });
+    }
+})
+
+router.post("/resume", upload.single("resume"), async (req, res) => {
+    console.log("req.file:", req.file);
+    console.log("req.body:", req.body);
+    console.log("req.headers['content-type']:", req.headers['content-type']);
+    try {
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                message: "No file uploaded. Please attach a PDF.",
+            });
+        }
+
+        const resumeText = await extractTextFromPDF(req.file.buffer);
+        const parsed = await parseResume(resumeText);
+
+        const profile = await Profile.findOneAndUpdate(
+            { userId: req.user._id },
+            {
+                $set: {
+                    firstName: parsed.firstName || "",
+                    lastName: parsed.lastName || "",
+                    phone: parsed.phone || "",
+                    location: parsed.location || "",
+                    linkedin: parsed.linkedin || "",
+                    github: parsed.github || "",
+                    portfolio: parsed.portfolio || "",
+                    skills: parsed.skills || [],
+                    cvBullets: parsed.cvBullets || [],
+                    targetRoles: parsed.targetRoles || [],
+                    resumeText,
+                    resumeFileName: req.file.originalname,
+                    resumeUploadedAt: new Date(),
+                },
+            },
+            { returnDocument: "after", upsert: true }
+        )
+        res.json({
+            success: true,
+            message: "Resume parsed successfully.",
+            profile,
+            extracted: {
+                name: `${parsed.firstName} ${parsed.lastName}`.trim(),
+                skillsCount: parsed.skills?.length || 0,
+                bulletsCount: parsed.cvBullets?.length || 0,
+            },
+        });
+    } catch (err) {
+        console.error("Resume upload error DETAILS:", err);
+
+        if (err.message?.includes("Only PDF")) {
+            return res.status(400).json({ success: false, message: err.message });
+        }
+        if (err.message?.includes("Could not extract")) {
+            return res.status(422).json({ success: false, message: err.message });
+        }
+        if (err instanceof SyntaxError) {
+            return res.status(502).json({
+                success: false,
+                message: "AI parsing failed. Please try again.",
+            });
+        }
+        console.error("Resume upload error:", err);
+        res.status(500).json({ success: false, message: "Resume processing failed." });
+    }
+})
+
+export default router;

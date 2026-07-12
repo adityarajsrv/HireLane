@@ -6,6 +6,7 @@ import cookieParser from "cookie-parser";
 import config from "./config/config.js";
 import { connectDB } from "./config/db.js";
 import authRoutes from "./routes/auth.js";
+import profileRoutes from "./routes/profile.js";
 
 const app = express();
 
@@ -28,6 +29,7 @@ if (config.isDev) {
 app.get("/health", (_, res) => res.json({ status: "ok", ts: Date.now() }));
 
 app.use("/auth", authRoutes);
+app.use("/api/profile", profileRoutes);
 
 app.use((req, res) => {
     res.status(404).json({
@@ -40,7 +42,7 @@ app.use((err, req, res, next) => {
     console.error("Global error handler:", err);
     res.status(err.status || 500).json({
         success: false,
-        message: env.isProd ? "Internal Server Error" : err.message,
+        message: config.isProd ? "Internal Server Error" : err.message,
     });
 })
 
