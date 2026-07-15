@@ -5,7 +5,7 @@ const ai = new GoogleGenAI({ apiKey: config.GEMINI_API_KEY });
 
 const parseResume = async (resumeText) => {
   const interaction = await ai.models.generateContent({
-    model: "gemini-2.0-flash",  
+    model: "gemini-3.1-flash-lite",  
     contents: `
 You are a resume parser. Extract structured data from this resume text.
 
@@ -48,7 +48,7 @@ ${resumeText}
 
 const generateCoverLetter = async ({ jobDescription, cvBullets, targetRole, company }) => {
   const interaction = await ai.models.generateContent({
-    model: "gemini-2.0-flash",   
+    model: "gemini-3.1-flash-lite",   
     contents: `
 Write a concise, tailored cover letter opening (3 paragraphs max) for this job application.
 
