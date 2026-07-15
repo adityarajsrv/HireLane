@@ -5,7 +5,7 @@ const ai = new GoogleGenAI({ apiKey: config.GEMINI_API_KEY });
 
 const parseResume = async (resumeText) => {
   const interaction = await ai.models.generateContent({
-    model: "gemini-3.1-flash-lite",  
+    model: "gemini-3.1-flash-lite",
     contents: `
 You are a resume parser. Extract structured data from this resume text.
 
@@ -48,7 +48,7 @@ ${resumeText}
 
 const generateCoverLetter = async ({ jobDescription, cvBullets, targetRole, company }) => {
   const interaction = await ai.models.generateContent({
-    model: "gemini-3.1-flash-lite",   
+    model: "gemini-3.1-flash-lite",
     contents: `
 Write a concise, tailored cover letter opening (3 paragraphs max) for this job application.
 
@@ -74,4 +74,39 @@ Rules:
   return interaction.text.trim();
 };
 
-export { parseResume, generateCoverLetter };
+const classifyField = async (label, ats) => {
+  const interaction = await ai.models.generateContent({
+    model: "gemini-3.1-flash-lite",
+    contents: `
+You are classifying a job application form field.
+
+ATS Platform: ${ats}
+Field Label: "${label}"
+
+Which profile key does this field map to?
+Return ONLY one of these exact strings, nothing else:
+firstName, lastName, email, phone, linkedin, github, 
+portfolio, location, workAuth, expectedSalary, 
+noticePeriod, coverLetter, unknown
+
+If the field doesn't match any of the above clearly, return: unknown
+
+Return only the single word, no explanation, no punctuation.
+    `,
+  })
+
+  const result = interaction.text.trim().toLowerCase();
+
+  const validKeys = [
+    "firstName", "lastName", "email", "phone",
+    "linkedin", "github", "portfolio", "location",
+    "workAuth", "expectedSalary", "noticePeriod",
+    "coverLetter", "unknown",
+  ];
+
+  const matched = validKeys.find(key => key.toLowerCase() === result);
+
+  return matched || "unknown";
+}
+
+export { parseResume, generateCoverLetter, classifyField };

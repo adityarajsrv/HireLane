@@ -7,6 +7,7 @@ import config from "./config/config.js";
 import { connectDB } from "./config/db.js";
 import authRoutes from "./routes/auth.js";
 import profileRoutes from "./routes/profile.js";
+import classifyRoutes from "./routes/classify.js";
 
 const app = express();
 
@@ -30,6 +31,7 @@ app.get("/health", (_, res) => res.json({ status: "ok", ts: Date.now() }));
 
 app.use("/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
+app.use("/api/classify-fields", classifyRoutes);
 
 app.use((req, res) => {
     res.status(404).json({

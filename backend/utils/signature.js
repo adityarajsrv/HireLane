@@ -31,9 +31,15 @@ const hashRefreshToken = (token) => {
   return crypto.createHash("sha256").update(token).digest("hex");
 };
 
+const generateFieldSignature = (ats, label, fieldType = "text") => {
+  const raw = `${ats}:${label.toLowerCase().trim()}:${fieldType}`;
+  return crypto.createHash("sha256").update(raw).digest("hex");
+};
+
 export {
   createAccessToken,
   verifyAccessToken,
   createRefreshToken,
   hashRefreshToken,
+  generateFieldSignature,
 };
