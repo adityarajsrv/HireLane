@@ -4,12 +4,13 @@ import { protect } from '../middlewares/authMiddleware.js';
 import { classifyFromMap } from "../services/fieldMap.js";
 import { classifyField } from "../services/gemini.js";
 import { generateFieldSignature } from "../utils/signature.js";
+import { checkAICallQuota } from '../middlewares/quota.js';
 
 const router = express.Router();
 
 router.use(protect)
 
-router.post('/', async (req, res) => {
+router.post('/', checkAICallQuota, async (req, res) => {
     try {
         const { ats, fields } = req.body;
         if (!ats || !fields || !Array.isArray(fields) || fields.length === 0) {

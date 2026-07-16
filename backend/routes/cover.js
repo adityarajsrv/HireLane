@@ -2,11 +2,12 @@ import express from "express";
 import Profile from "../models/Profile.js";
 import { protect } from "../middlewares/authMiddleware.js";
 import { generateCoverLetter } from "../services/gemini.js";
+import { checkAICallQuota } from "../middlewares/quota.js";
 
 const router = express.Router();
 router.use(protect);
 
-router.post("/", async (req, res) => {
+router.post("/", checkAICallQuota, async (req, res) => {
     try {
         const { jobDescription, company, role } = req.body;
 
