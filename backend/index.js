@@ -9,6 +9,7 @@ import authRoutes from "./routes/auth.js";
 import profileRoutes from "./routes/profile.js";
 import classifyRoutes from "./routes/classify.js";
 import coverRoutes from "./routes/cover.js";
+import applicationRoutes from "./routes/applications.js"
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.use("/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/classify-fields", classifyRoutes);
 app.use("/api/generate-cover", coverRoutes);
+app.use("/api/applications", applicationRoutes);
 
 app.use((req, res) => {
     res.status(404).json({
