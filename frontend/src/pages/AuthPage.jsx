@@ -90,9 +90,6 @@ const AnimatedBg = () => {
       const w = W(),
         h = H();
       ctx.clearRect(0, 0, w, h);
-
-      // ── Grid ─────────────────────────────────────────────
-      // Visible enough to feel structured, not enough to feel heavy
       ctx.lineWidth = 0.5;
       ctx.strokeStyle = "rgba(91,61,245,0.038)";
       const gs = 54;
@@ -108,8 +105,6 @@ const AnimatedBg = () => {
         ctx.lineTo(w, y);
         ctx.stroke();
       }
-
-      // ── Node connections ──────────────────────────────────
       for (let i = 0; i < nodes.length; i++) {
         for (let j = i + 1; j < nodes.length; j++) {
           const dx = nodes[i].x - nodes[j].x;
@@ -126,15 +121,12 @@ const AnimatedBg = () => {
         }
       }
 
-      // ── Nodes ─────────────────────────────────────────────
       nodes.forEach((n) => {
         const pulse = 0.28 + 0.45 * Math.abs(Math.sin(t * 0.007 + n.phase));
         ctx.beginPath();
         ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(${n.color},${pulse})`;
         ctx.fill();
-
-        // one soft outer ring — adds depth without being loud
         ctx.beginPath();
         ctx.arc(n.x, n.y, n.r + 2.5, 0, Math.PI * 2);
         ctx.strokeStyle = `rgba(${n.color},${pulse * 0.1})`;
@@ -146,8 +138,6 @@ const AnimatedBg = () => {
         if (n.x < 0 || n.x > w) n.vx *= -1;
         if (n.y < 0 || n.y > h) n.vy *= -1;
       });
-
-      // ── Field label pills ─────────────────────────────────
       ctx.textBaseline = "middle";
       floaters.forEach((f) => {
         const a = f.alpha * (0.78 + 0.22 * Math.sin(t * 0.005 + f.phase));
@@ -269,7 +259,6 @@ const FilledField = ({ label, value, delay }) => {
   );
 };
 
-// ── Right Panel ───────────────────────────────────────────────────────────────
 const RightPanel = () => {
   const [cycle, setCycle] = useState(0);
   useEffect(() => {
@@ -302,7 +291,6 @@ const RightPanel = () => {
           AI reads your resume once. Fills every ATS forever.
         </p>
       </div>
-
       <div
         className="rounded-xl border border-gray-200 bg-white overflow-hidden"
         style={{ boxShadow: "0 2px 12px rgba(0,0,0,0.04)" }}
@@ -354,7 +342,6 @@ const RightPanel = () => {
           </div>
         </div>
       </div>
-
       <div className="grid grid-cols-3 gap-3">
         {[
           {
@@ -386,7 +373,6 @@ const RightPanel = () => {
           </div>
         ))}
       </div>
-
       <div className="flex items-center gap-4 pt-2 border-t border-gray-100">
         {["JWT secured", "No passwords stored", "Redis OTP cache"].map(
           (item) => (
@@ -403,7 +389,6 @@ const RightPanel = () => {
   );
 };
 
-// ── Input Field ───────────────────────────────────────────────────────────────
 const InputField = ({
   label,
   icon: Icon,
@@ -441,7 +426,6 @@ const InputField = ({
   </div>
 );
 
-// ── Auth Page ─────────────────────────────────────────────────────────────────
 export default function AuthPage() {
   const navigate = useNavigate();
   const { login, register } = useAuth();
@@ -477,7 +461,6 @@ export default function AuthPage() {
 
      try {
       if (isSignup) {
-        // Basic client-side validation before hitting the server
         if (password !== confirm) {
           setError("Passwords do not match.");
           return;
@@ -500,8 +483,6 @@ export default function AuthPage() {
       style={{ background: "#f0effa" }}
     >
       <AnimatedBg />
-
-      {/* Modal */}
       <div
         className="relative flex w-full overflow-hidden bg-white"
         style={{
@@ -513,9 +494,7 @@ export default function AuthPage() {
             "0 8px 48px rgba(91,61,245,0.12), 0 1px 0 rgba(255,255,255,0.9) inset",
         }}
       >
-        {/* ── Left: Form ── */}
         <div className="w-95 shrink-0 flex flex-col px-8 py-7">
-          {/* Brand */}
           <div className="flex items-center mb-4 gap-2 font-bold cursor-pointer transition-transform duration-300 hover:scale-105">
             <img src={logo} alt="" className="w-10 h-10" />
             <h2>
@@ -523,8 +502,6 @@ export default function AuthPage() {
               <span className="text-[#602fe2] text-xl">Lane</span>
             </h2>
           </div>
-
-          {/* Tab switcher */}
           <div
             className="flex p-0.75 mb-5 rounded-[10px]"
             style={{ background: "#f4f4f8", border: "1px solid #ebebf2" }}
@@ -548,8 +525,6 @@ export default function AuthPage() {
               </button>
             ))}
           </div>
-
-          {/* Heading */}
           <div className="mb-4">
             <h1
               className="text-[20px] font-bold text-gray-950 tracking-tight leading-tight"
@@ -563,8 +538,6 @@ export default function AuthPage() {
                 : "Sign in to your career intelligence dashboard."}
             </p>
           </div>
-
-          {/* Google */}
           <button
             className="w-full flex items-center justify-center gap-2.5 text-[12.5px] font-medium text-gray-700 rounded-xl transition-all cursor-pointer mb-4 hover:bg-gray-50"
             style={{
@@ -577,8 +550,6 @@ export default function AuthPage() {
             <GoogleIcon />
             {isSignup ? "Sign up with Google" : "Continue with Google"}
           </button>
-
-          {/* Divider */}
           <div className="flex items-center gap-3 mb-4">
             <div className="flex-1 h-px" style={{ background: "#ebebf2" }} />
             <span className="text-[10px] text-gray-300 font-mono tracking-wide">
@@ -586,8 +557,6 @@ export default function AuthPage() {
             </span>
             <div className="flex-1 h-px" style={{ background: "#ebebf2" }} />
           </div>
-
-          {/* Form fields */}
           <form
             onSubmit={handleSubmit}
             className="flex flex-col"
@@ -604,7 +573,6 @@ export default function AuthPage() {
                 placeholder="Aryan Kumar"
               />
             )}
-
             <InputField
               compact={isSignup}
               label="Email"
@@ -622,7 +590,6 @@ export default function AuthPage() {
                 ) : null
               }
             />
-
             <InputField
               compact={isSignup}
               label="Password"
@@ -654,7 +621,6 @@ export default function AuthPage() {
                 )
               }
             />
-
             {isSignup && password.length > 0 && (
               <div className="flex gap-3 -mt-0.5">
                 {[
@@ -676,7 +642,6 @@ export default function AuthPage() {
                 ))}
               </div>
             )}
-
             {isSignup && (
               <div className="flex flex-col gap-0.5">
                 <label className="text-[9.5px] font-medium text-gray-400 uppercase tracking-widest font-mono">
@@ -718,7 +683,6 @@ export default function AuthPage() {
                 )}
               </div>
             )}
-
             <button
               type="submit"
               disabled={loading}
@@ -761,8 +725,6 @@ export default function AuthPage() {
               )}
             </button>
           </form>
-
-          {/* Footer */}
           <div className="mt-4 text-center">
             <p className="text-[11px] text-gray-400">
               {isSignup ? (
@@ -801,8 +763,6 @@ export default function AuthPage() {
             </p>
           </div>
         </div>
-
-        {/* ── Right: Product preview ── */}
         <RightPanel />
       </div>
     </div>
