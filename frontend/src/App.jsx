@@ -6,6 +6,7 @@ import Shell from "./components/layout/Shell.jsx";
 import Home from "./pages/Home.jsx";
 import AuthPage from "./pages/AuthPage.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
+import Applications from "./pages/Applications.jsx";
 
 const PlaceholderPage = ({ name }) => (
   <div>
@@ -24,7 +25,7 @@ const DashboardApp = () => {
   const renderPage = () => {
     switch (activePage) {
       case "dashboard": return <Dashboard onNavigate={setActivePage} />;
-      case "applications": return <PlaceholderPage name="Applications" />;
+      case "applications": return <Applications />;
       case "jdmatch":      return <PlaceholderPage name="JD Match" />;
       case "analytics":    return <PlaceholderPage name="Analytics" />;
       case "predictor":    return <PlaceholderPage name="Predictor" />;
