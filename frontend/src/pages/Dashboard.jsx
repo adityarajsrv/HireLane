@@ -1,25 +1,82 @@
-import { useAuth } from "../context/AuthContext.jsx";
+import StatCards     from "../components/dashboard/StatCards.jsx";
+import TimelineStrip from "../components/dashboard/TimelineStrip.jsx";
+import RecentApps    from "../components/dashboard/RecentApps.jsx";
+import FunnelChart   from "../components/dashboard/FunnelChart.jsx";
+import InsightCard   from "../components/dashboard/InsightCard.jsx";
+import UpcomingCard  from "../components/dashboard/UpcomingCard.jsx";
 
-export default function Dashboard() {
-  const { user, logout } = useAuth();
-
+const Dashboard = ({ onNavigate }) => {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f0effa]">
-      <div className="bg-white rounded-2xl border border-gray-200 p-8 flex flex-col gap-4 w-80">
-        <h1 className="text-[18px] font-semibold text-gray-900">
-          Welcome, {user?.name}
-        </h1>
-        <p className="text-[12px] font-mono text-gray-400">{user?.email}</p>
-        <p className="text-[11px] font-mono text-gray-300">
-          Plan: {user?.plan}
-        </p>
-        <button
-          onClick={logout}
-          className="mt-2 text-[12px] font-medium text-red-400 hover:text-red-500 text-left"
-        >
-          Logout →
-        </button>
+    <div>
+      <div className="flex items-start justify-between mb-4">
+        <div>
+          <h1
+            style={{
+              fontFamily: "Syne, sans-serif",
+              fontSize: 22,
+              fontWeight: 500,
+              color: "#0a0a0f",
+              marginBottom: 4,
+            }}
+          >
+            Dashboard
+          </h1>
+          <span
+            style={{
+              fontFamily: "JetBrains Mono, monospace",
+              fontSize: 11,
+              color: "#9ca3af",
+            }}
+          >
+            {new Date().toLocaleDateString("en-US", {
+              month: "long", day: "numeric", year: "numeric"
+            })}
+            {" · 34 applications tracked"}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span
+            className="rounded-full animate-pulse"
+            style={{ width: 6, height: 6, background: "#1bd29c", display: "block" }}
+          />
+          <span
+            style={{
+              fontSize: 10,
+              fontFamily: "JetBrains Mono, monospace",
+              color: "#1bd29c",
+            }}
+          >
+            Live
+          </span>
+          <span style={{ color: "#f0f0f4" }}>·</span>
+          <span
+            style={{
+              fontSize: 10,
+              fontFamily: "JetBrains Mono, monospace",
+              color: "#9ca3af",
+            }}
+          >
+            Predictor v1 active
+          </span>
+        </div>
+      </div>
+      <TimelineStrip />
+      <StatCards />
+      <div
+        className="grid gap-4"
+        style={{ gridTemplateColumns: "3fr 2fr" }}
+      >
+        <div>
+          <RecentApps onViewAll={() => onNavigate("applications")} />
+          <InsightCard />
+        </div>
+        <div>
+          <FunnelChart />
+          <UpcomingCard />
+        </div>
       </div>
     </div>
   );
-}
+};
+
+export default Dashboard;
