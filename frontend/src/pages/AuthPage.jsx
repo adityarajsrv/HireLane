@@ -373,18 +373,6 @@ const RightPanel = () => {
           </div>
         ))}
       </div>
-      <div className="flex items-center gap-4 pt-2 border-t border-gray-100">
-        {["JWT secured", "No passwords stored", "Redis OTP cache"].map(
-          (item) => (
-            <div key={item} className="flex items-center gap-1">
-              <CheckCircle size={10} className="text-[#1bd29c] shrink-0" />
-              <span className="text-[9.5px] font-mono text-gray-400">
-                {item}
-              </span>
-            </div>
-          ),
-        )}
-      </div>
     </div>
   );
 };
