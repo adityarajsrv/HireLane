@@ -7,13 +7,29 @@ import Home from "./pages/Home.jsx";
 import AuthPage from "./pages/AuthPage.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import Applications from "./pages/Applications.jsx";
+import Analytics from "./pages/Analytics.jsx";
+import Profile from "./pages/Profile.jsx";
+import JDMatch from "./pages/JDMatch.jsx";
 
 const PlaceholderPage = ({ name }) => (
   <div>
-    <h1 style={{ fontFamily: "Syne, sans-serif", fontSize: 22, color: "#0a0a0f", marginBottom: 8 }}>
+    <h1
+      style={{
+        fontFamily: "Syne, sans-serif",
+        fontSize: 22,
+        color: "#0a0a0f",
+        marginBottom: 8,
+      }}
+    >
       {name}
     </h1>
-    <p style={{ fontFamily: "DM Sans, sans-serif", fontSize: 13, color: "#9ca3af" }}>
+    <p
+      style={{
+        fontFamily: "DM Sans, sans-serif",
+        fontSize: 13,
+        color: "#9ca3af",
+      }}
+    >
       Building this next...
     </p>
   </div>
@@ -24,15 +40,24 @@ const DashboardApp = () => {
 
   const renderPage = () => {
     switch (activePage) {
-      case "dashboard": return <Dashboard onNavigate={setActivePage} />;
-      case "applications": return <Applications />;
-      case "jdmatch":      return <PlaceholderPage name="JD Match" />;
-      case "analytics":    return <PlaceholderPage name="Analytics" />;
-      case "predictor":    return <PlaceholderPage name="Predictor" />;
-      case "cache":        return <PlaceholderPage name="Cache Monitor" />;
-      case "profile":      return <PlaceholderPage name="Profile" />;
-      case "settings":     return <PlaceholderPage name="Settings" />;
-      default:             return <PlaceholderPage name="Dashboard" />;
+      case "dashboard":
+        return <Dashboard onNavigate={setActivePage} />;
+      case "applications":
+        return <Applications />;
+      case "analytics":
+        return <Analytics />;
+      case "profile":
+        return <Profile />;
+      case "jdmatch":
+        return <JDMatch />;
+      case "predictor":
+        return <PlaceholderPage name="Predictor" />;
+      case "cache":
+        return <PlaceholderPage name="Cache Monitor" />;
+      case "settings":
+        return <PlaceholderPage name="Settings" />;
+      default:
+        return <PlaceholderPage name="Dashboard" />;
     }
   };
 
@@ -48,7 +73,7 @@ const App = () => {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          <Route path="/"     element={<Home />} />
+          <Route path="/" element={<Home />} />
           <Route path="/auth" element={<AuthPage />} />
           <Route
             path="/dashboard"
