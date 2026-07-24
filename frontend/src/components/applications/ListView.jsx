@@ -1,35 +1,53 @@
 import { useState } from "react";
-import { STATUS_STYLE, ATS_STYLE } from "../../data/mockApplications.js";
 
-const ListView = ({ applications }) => {
-  const [selected, setSelected] = useState([]); 
+const STATUS_STYLE = {
+  applied: { bg: "#f0f0f4", color: "#6b7280" },
+  oa: { bg: "#ede8ff", color: "#5b3df5" },
+  interview: { bg: "#e1f5ee", color: "#0f6e56" },
+  rejected: { bg: "#fcebeb", color: "#e24b4a" },
+  offer: { bg: "#e1f5ee", color: "#0f6e56" },
+};
+const ATS_STYLE = {
+  greenhouse: { bg: "#ede8ff", color: "#5b3df5" },
+  workday: { bg: "#f0f0f4", color: "#6b7280" },
+  lever: { bg: "#e1f5ee", color: "#0f6e56" },
+  internshala: { bg: "#faeeda", color: "#854f0b" },
+  naukri: { bg: "#fcebeb", color: "#e24b4a" },
+  other: { bg: "#f0f0f4", color: "#6b7280" },
+};
 
-  const toggleSelect = (id) => {
+const ListView = ({ applications, onRowClick }) => {
+  const [selected, setSelected] = useState([]);
+
+  const toggleSelect = (id) =>
     setSelected((prev) =>
-      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id],
     );
-  };
 
-  const toggleAll = () => {
+  const toggleAll = () =>
     setSelected(
-      selected.length === applications.length ? [] : applications.map((a) => a.id)
+      selected.length === applications.length
+        ? []
+        : applications.map((a) => a._id),
     );
-  };
 
   return (
     <div style={{ position: "relative" }}>
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
         <thead>
           <tr
-            style={{
-              borderBottom: "1px solid #f0f0f4",
-              background: "white",
-            }}
+            style={{ borderBottom: "1px solid #f0f0f4", background: "white" }}
           >
-            <th style={{ width: 40, padding: "10px 12px" }}>
+            <th
+              style={{ width: 40, padding: "10px 12px" }}
+              onClick={(e) => e.stopPropagation()}
+            >
               <input
                 type="checkbox"
-                checked={selected.length === applications.length && applications.length > 0}
+                checked={
+                  selected.length === applications.length &&
+                  applications.length > 0
+                }
                 onChange={toggleAll}
                 style={{ accentColor: "#5b3df5", cursor: "pointer" }}
               />
@@ -43,7 +61,6 @@ const ListView = ({ applications }) => {
                   fontSize: 10,
                   fontFamily: "JetBrains Mono, monospace",
                   color: "#9ca3af",
-                  fontWeight: 500,
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
                 }}
@@ -56,13 +73,22 @@ const ListView = ({ applications }) => {
         </thead>
         <tbody>
           {applications.map((app) => {
-            const isSelected  = selected.includes(app.id);
-            const statusStyle = STATUS_STYLE[app.status] || STATUS_STYLE.applied;
-            const atsStyle    = ATS_STYLE[app.ats]       || ATS_STYLE.Workday;
+            const isSelected = selected.includes(app._id);
+            const statusStyle =
+              STATUS_STYLE[app.status] || STATUS_STYLE.applied;
+            const atsStyle =
+              ATS_STYLE[(app.ats || "other").toLowerCase()] || ATS_STYLE.other;
+            const dateStr = app.appliedAt
+              ? new Date(app.appliedAt).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                })
+              : "—";
 
             return (
               <tr
-                key={app.id}
+                key={app._id}
+                onClick={() => onRowClick(app)}
                 style={{
                   borderBottom: "1px solid #f0f0f4",
                   background: isSelected ? "#f5f4ff" : "white",
@@ -76,11 +102,14 @@ const ListView = ({ applications }) => {
                   if (!isSelected) e.currentTarget.style.background = "white";
                 }}
               >
-                <td style={{ padding: "0 12px", width: 40 }}>
+                <td
+                  style={{ padding: "0 12px", width: 40 }}
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <input
                     type="checkbox"
                     checked={isSelected}
-                    onChange={() => toggleSelect(app.id)}
+                    onChange={() => toggleSelect(app._id)}
                     style={{ accentColor: "#5b3df5", cursor: "pointer" }}
                   />
                 </td>
@@ -113,8 +142,7 @@ const ListView = ({ applications }) => {
                     style={{
                       fontSize: 9,
                       fontFamily: "JetBrains Mono, monospace",
-                      background: atsStyle.bg,
-                      color: atsStyle.color,
+                      ...atsStyle,
                     }}
                   >
                     {app.ats}
@@ -126,8 +154,7 @@ const ListView = ({ applications }) => {
                     style={{
                       fontSize: 9,
                       fontFamily: "JetBrains Mono, monospace",
-                      background: statusStyle.bg,
-                      color: statusStyle.color,
+                      ...statusStyle,
                       textTransform: "capitalize",
                     }}
                   >
@@ -142,7 +169,7 @@ const ListView = ({ applications }) => {
                       color: "#5b3df5",
                     }}
                   >
-                    {app.matchScore}%
+                    {app.matchScore ?? "—"}%
                   </span>
                 </td>
                 <td style={{ padding: "0 12px" }}>
@@ -153,10 +180,13 @@ const ListView = ({ applications }) => {
                       color: "#9ca3af",
                     }}
                   >
-                    {app.date}
+                    {dateStr}
                   </span>
                 </td>
-                <td style={{ padding: "0 12px", width: 40 }}>
+                <td
+                  style={{ padding: "0 12px", width: 40 }}
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <button
                     style={{
                       background: "none",
@@ -167,8 +197,6 @@ const ListView = ({ applications }) => {
                       padding: "4px 6px",
                       borderRadius: 6,
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = "#f0f0f4"}
-                    onMouseLeave={(e) => e.currentTarget.style.background = "none"}
                   >
                     ···
                   </button>
@@ -178,6 +206,7 @@ const ListView = ({ applications }) => {
           })}
         </tbody>
       </table>
+
       {selected.length > 0 && (
         <div
           className="fixed flex items-center gap-4 px-4 py-2 bg-white rounded-2xl"
@@ -188,15 +217,8 @@ const ListView = ({ applications }) => {
             border: "1px solid #f0f0f4",
             boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
             zIndex: 50,
-            animation: "slideUp 200ms ease-out",
           }}
         >
-          <style>{`
-            @keyframes slideUp {
-              from { transform: translateX(-50%) translateY(8px); opacity: 0; }
-              to   { transform: translateX(-50%) translateY(0);   opacity: 1; }
-            }
-          `}</style>
           <span
             style={{
               fontSize: 12,
@@ -206,20 +228,6 @@ const ListView = ({ applications }) => {
           >
             {selected.length} selected
           </span>
-          <button
-            style={{
-              fontSize: 12,
-              fontFamily: "DM Sans, sans-serif",
-              color: "#0a0a0f",
-              background: "#f0f0f4",
-              border: "none",
-              borderRadius: 8,
-              padding: "5px 12px",
-              cursor: "pointer",
-            }}
-          >
-            Move to ▾
-          </button>
           <button
             onClick={() => setSelected([])}
             style={{
@@ -231,7 +239,7 @@ const ListView = ({ applications }) => {
               cursor: "pointer",
             }}
           >
-            Delete
+            Deselect
           </button>
         </div>
       )}

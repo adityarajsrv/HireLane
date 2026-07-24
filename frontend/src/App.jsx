@@ -10,6 +10,7 @@ import Applications from "./pages/Applications.jsx";
 import Analytics from "./pages/Analytics.jsx";
 import Profile from "./pages/Profile.jsx";
 import JDMatch from "./pages/JDMatch.jsx";
+import Settings from "./pages/Settings.jsx";
 
 const PlaceholderPage = ({ name }) => (
   <div>
@@ -50,12 +51,12 @@ const DashboardApp = () => {
         return <Profile />;
       case "jdmatch":
         return <JDMatch />;
+      case "settings":
+        return <Settings />;
       case "predictor":
         return <PlaceholderPage name="Predictor" />;
       case "cache":
         return <PlaceholderPage name="Cache Monitor" />;
-      case "settings":
-        return <PlaceholderPage name="Settings" />;
       default:
         return <PlaceholderPage name="Dashboard" />;
     }
