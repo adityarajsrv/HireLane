@@ -5,7 +5,7 @@ import ListView from "../components/applications/ListView.jsx";
 import DetailPanel from "../components/applications/DetailPanel.jsx";
 import AddApplicationModal from "../components/applications/AddApplicationModal.jsx";
 
-const Applications = () => {
+const Applications = ({ initialSearch = "" }) => {
   const {
     applications,
     loading,
@@ -17,7 +17,7 @@ const Applications = () => {
 
   const [view, setView] = useState("board");
   const [selectedApp, setSelectedApp] = useState(null);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(initialSearch);
   const [showAddModal, setShowAddModal] = useState(false);
   const [createError, setCreateError] = useState("");
 

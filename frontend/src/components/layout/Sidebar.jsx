@@ -3,8 +3,7 @@ import {
   Briefcase,
   Search,
   BarChart3,
-  TrendingUp,
-  Database,
+  Lightbulb,
   User,
   Settings,
 } from "lucide-react";
@@ -22,8 +21,7 @@ const NAV_GROUPS = [
     label: "INTELLIGENCE",
     items: [
       { id: "analytics", label: "Analytics" },
-      { id: "predictor", label: "Predictor" },
-      { id: "cache", label: "Cache Monitor" },
+      { id: "insights", label: "Insights" },
     ],
   },
   {
@@ -36,22 +34,16 @@ const NAV_GROUPS = [
 ];
 
 const Icon = ({ id }) => {
-  const props = {
-    size: 15,
-    strokeWidth: 1.8,
-  };
-
+  const props = { size: 15, strokeWidth: 1.8 };
   const icons = {
     dashboard: <LayoutGrid {...props} />,
     applications: <Briefcase {...props} />,
     jdmatch: <Search {...props} />,
     analytics: <BarChart3 {...props} />,
-    predictor: <TrendingUp {...props} />,
-    cache: <Database {...props} />,
+    insights: <Lightbulb {...props} />,
     profile: <User {...props} />,
     settings: <Settings {...props} />,
   };
-
   return icons[id] || null;
 };
 
@@ -78,7 +70,6 @@ const Sidebar = ({ activePage, onNavigate }) => {
             )}
             {group.items.map((item) => {
               const isActive = activePage === item.id;
-
               return (
                 <button
                   key={item.id}
@@ -140,75 +131,25 @@ const Sidebar = ({ activePage, onNavigate }) => {
       </nav>
 
       <div className="border-t border-[#f0f0f4] p-3">
-        <div className="flex items-center gap-1.5 mb-3 px-1">
+        <div
+          className="flex items-center gap-1.5 px-1 py-1.5 rounded-lg"
+          style={{ background: "#f5f4ff", border: "1px dashed #e0d9ff" }}
+        >
           <span
             className="rounded-full"
             style={{
               width: 6,
               height: 6,
-              background: "#1bd29c",
+              background: "#e0e0ea",
               flexShrink: 0,
             }}
           />
           <span
             className="text-[#9ca3af]"
-            style={{
-              fontSize: 10,
-              fontFamily: "JetBrains Mono, monospace",
-            }}
+            style={{ fontSize: 10, fontFamily: "JetBrains Mono, monospace" }}
           >
-            Extension active
+            Extension coming soon
           </span>
-        </div>
-
-        <div className="flex items-center gap-2 px-1">
-          <div
-            className="flex items-center justify-center rounded-full text-white shrink-0"
-            style={{
-              width: 30,
-              height: 30,
-              background: "#5b3df5",
-              fontSize: 10,
-              fontFamily: "Syne, sans-serif",
-              fontWeight: 600,
-            }}
-          >
-            AK
-          </div>
-
-          <div className="flex-1 min-w-0">
-            <div
-              className="text-[#0a0a0f] truncate"
-              style={{
-                fontSize: 12,
-                fontFamily: "DM Sans, sans-serif",
-                fontWeight: 500,
-              }}
-            >
-              Aryan Kumar
-            </div>
-
-            <div
-              className="text-[#9ca3af]"
-              style={{
-                fontSize: 10,
-                fontFamily: "JetBrains Mono, monospace",
-              }}
-            >
-              Free Plan
-            </div>
-          </div>
-
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#9ca3af"
-            strokeWidth="2"
-          >
-            <polyline points="18 15 12 9 6 15" />
-          </svg>
         </div>
       </div>
     </aside>

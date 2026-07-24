@@ -12,6 +12,7 @@ import coverRoutes from "./routes/cover.js";
 import applicationRoutes from "./routes/applications.js";
 import analyticsRoutes from "./routes/analytics.js";
 import quotaRoutes from "./routes/quota.js";
+import jdMatchRoutes from "./routes/jdmatch.js";
 
 const app = express();
 
@@ -40,6 +41,7 @@ app.use("/api/generate-cover", coverRoutes);
 app.use("/api/applications", applicationRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/quota", quotaRoutes);
+app.use("/api/jdmatch", jdMatchRoutes);
 
 app.use((req, res) => {
     res.status(404).json({

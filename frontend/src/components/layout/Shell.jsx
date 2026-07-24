@@ -2,10 +2,10 @@ import Sidebar from "./Sidebar.jsx";
 import Topbar from "./Topbar.jsx";
 import DiagnosticsPanel from "./DiagnosticsPanel.jsx";
 
-const Shell = ({ children, activePage, onNavigate }) => {
+const Shell = ({ children, activePage, onNavigate, onSearch }) => {
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-[#f5f4ff]">
-      <Topbar />
+      <Topbar onNavigate={onNavigate} onSearch={onSearch} />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar activePage={activePage} onNavigate={onNavigate} />
         <main className="flex-1 overflow-y-auto p-6">

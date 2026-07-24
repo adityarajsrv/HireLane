@@ -11,40 +11,18 @@ import Analytics from "./pages/Analytics.jsx";
 import Profile from "./pages/Profile.jsx";
 import JDMatch from "./pages/JDMatch.jsx";
 import Settings from "./pages/Settings.jsx";
-
-const PlaceholderPage = ({ name }) => (
-  <div>
-    <h1
-      style={{
-        fontFamily: "Syne, sans-serif",
-        fontSize: 22,
-        color: "#0a0a0f",
-        marginBottom: 8,
-      }}
-    >
-      {name}
-    </h1>
-    <p
-      style={{
-        fontFamily: "DM Sans, sans-serif",
-        fontSize: 13,
-        color: "#9ca3af",
-      }}
-    >
-      Building this next...
-    </p>
-  </div>
-);
+import Insights from "./pages/Insights.jsx";
 
 const DashboardApp = () => {
   const [activePage, setActivePage] = useState("dashboard");
+  const [globalSearch, setGlobalSearch] = useState("");
 
   const renderPage = () => {
     switch (activePage) {
       case "dashboard":
         return <Dashboard onNavigate={setActivePage} />;
       case "applications":
-        return <Applications />;
+        return <Applications initialSearch={globalSearch} />;
       case "analytics":
         return <Analytics />;
       case "profile":
@@ -53,17 +31,19 @@ const DashboardApp = () => {
         return <JDMatch />;
       case "settings":
         return <Settings />;
-      case "predictor":
-        return <PlaceholderPage name="Predictor" />;
-      case "cache":
-        return <PlaceholderPage name="Cache Monitor" />;
+      case "insights":
+        return <Insights />;
       default:
-        return <PlaceholderPage name="Dashboard" />;
+        return <Dashboard onNavigate={setActivePage} />;
     }
   };
 
   return (
-    <Shell activePage={activePage} onNavigate={setActivePage}>
+    <Shell
+      activePage={activePage}
+      onNavigate={setActivePage}
+      onSearch={setGlobalSearch}
+    >
       {renderPage()}
     </Shell>
   );
