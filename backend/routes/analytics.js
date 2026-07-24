@@ -12,23 +12,18 @@ router.get("/", async (req, res) => {
         const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 
         const funnelData = await Application.aggregate([
-            {
-                $match: { userId },
-            },
+            { $match: { userId } },
             {
                 $group: {
-                    _id: "status",
+                    _id: "$status",
                     count: { $sum: 1 },
                 },
             },
         ]);
 
-        const funnel = {
-            applied: 0, oa: 0, interview: 0,
-            rejected: 0, offer: 0,
-        };
+        const funnel = { applied: 0, oa: 0, interview: 0, rejected: 0, offer: 0 };
         for (const item of funnelData) {
-            funnel[item._id] = item.count;
+            if (item._id in funnel) funnel[item._id] = item.count;
         }
 
         const total = Object.values(funnel).reduce((a, b) => a + b, 0);
@@ -43,8 +38,7 @@ router.get("/", async (req, res) => {
                         $sum: {
                             $cond: [
                                 { $in: ["$status", ["oa", "interview", "offer"]] },
-                                1,
-                                0,
+                                1, 0,
                             ],
                         },
                     },
@@ -57,12 +51,7 @@ router.get("/", async (req, res) => {
                     positive: 1,
                     conversionRate: {
                         $round: [
-                            {
-                                $multiply: [
-                                    { $divide: ["$positive", "$total"] },
-                                    100,
-                                ],
-                            },
+                            { $multiply: [{ $divide: ["$positive", "$total"] }, 100] },
                             1,
                         ],
                     },
@@ -70,42 +59,26 @@ router.get("/", async (req, res) => {
             },
             { $sort: { conversionRate: -1 } },
         ]);
-        
+
         const timelineData = await Application.aggregate([
-            {
-                $match: {
-                    userId,
-                    appliedAt: { $gte: since },
-                },
-            },
+            { $match: { userId, appliedAt: { $gte: since } } },
             {
                 $group: {
-                    _id: {
-                        $dateToString: {
-                            format: "%Y-%m-%d",
-                            date: "$appliedAt",
-                        },
-                    },
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$appliedAt" } },
                     count: { $sum: 1 },
-                    aiUsed: {
-                        $sum: {
-                            $cond: [{ $gt: ["$matchScore", 0] }, 1, 0],
-                        },
-                    },
+                    aiUsed: { $sum: { $cond: [{ $gt: ["$matchScore", 0] }, 1, 0] } },
                 },
             },
             { $sort: { _id: 1 } },
         ]);
 
-        const responded = funnel.oa + funnel.interview +
-            funnel.offer + funnel.rejected;
+        const responded = funnel.oa + funnel.interview + funnel.offer + funnel.rejected;
         const responseRate = total > 0
             ? Math.round((responded / total) * 100 * 10) / 10
             : 0;
 
         const aiFilledCount = await Application.countDocuments({
-            userId,
-            matchScore: { $gt: 0 },
+            userId, matchScore: { $gt: 0 },
         });
         const timeSavedHours = Math.round((aiFilledCount * 8 / 60) * 10) / 10;
 
@@ -115,12 +88,7 @@ router.get("/", async (req, res) => {
         res.json({
             success: true,
             period: `${days}d`,
-            overview: {
-                total,
-                responseRate,
-                timeSavedHours,
-                aiFilledCount,
-            },
+            overview: { total, responseRate, timeSavedHours, aiFilledCount },
             funnel,
             platforms: platformData,
             timeline: timelineData,
@@ -128,18 +96,13 @@ router.get("/", async (req, res) => {
                 bestPlatform: bestPlatform?.ats || null,
                 worstPlatform: worstPlatform?.ats || null,
                 conversionGap: bestPlatform && worstPlatform
-                    ? Math.round(
-                        (bestPlatform.conversionRate - worstPlatform.conversionRate) * 10
-                    ) / 10
+                    ? Math.round((bestPlatform.conversionRate - worstPlatform.conversionRate) * 10) / 10
                     : 0,
             },
         });
     } catch (err) {
         console.error("Analytics error:", err);
-        res.status(500).json({
-            success: false,
-            message: "Failed to fetch analytics.",
-        });
+        res.status(500).json({ success: false, message: "Failed to fetch analytics." });
     }
 });
 
