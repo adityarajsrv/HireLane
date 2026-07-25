@@ -4,6 +4,7 @@ import BoardView from "../components/applications/BoardView.jsx";
 import ListView from "../components/applications/ListView.jsx";
 import DetailPanel from "../components/applications/DetailPanel.jsx";
 import AddApplicationModal from "../components/applications/AddApplicationModal.jsx";
+import useDebounce from "../hooks/useDebounce.js";
 
 const Applications = ({ initialSearch = "" }) => {
   const {
@@ -12,7 +13,7 @@ const Applications = ({ initialSearch = "" }) => {
     updateStatus,
     updateApplication,
     createApplication,
-    deleteApplication,
+    deleteApplication, bulkDeleteApplications,
   } = useApplications();
 
   const [view, setView] = useState("board");
@@ -20,12 +21,12 @@ const Applications = ({ initialSearch = "" }) => {
   const [search, setSearch] = useState(initialSearch);
   const [showAddModal, setShowAddModal] = useState(false);
   const [createError, setCreateError] = useState("");
+  const debouncedSearch = useDebounce(search, 250);
 
-  const filtered = applications.filter(
-    (a) =>
-      a.company?.toLowerCase().includes(search.toLowerCase()) ||
-      a.role?.toLowerCase().includes(search.toLowerCase()) ||
-      a.ats?.toLowerCase().includes(search.toLowerCase()),
+  const filtered = applications.filter((a) =>
+    a.company?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+    a.role?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+    a.ats?.toLowerCase().includes(debouncedSearch.toLowerCase())
   );
 
   const liveSelectedApp = selectedApp
@@ -186,7 +187,7 @@ const Applications = ({ initialSearch = "" }) => {
           onCardClick={setSelectedApp}
         />
       ) : (
-        <ListView applications={filtered} onRowClick={setSelectedApp} />
+        <ListView applications={filtered} onRowClick={setSelectedApp} onBulkDelete={bulkDeleteApplications} />
       )}
 
       <DetailPanel

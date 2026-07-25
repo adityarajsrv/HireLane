@@ -3,8 +3,8 @@ import api from "../lib/axios.js";
 
 const useApplications = (filters = {}) => {
   const [applications, setApplications] = useState([]);
-  const [loading,      setLoading      ] = useState(true);
-  const [error,        setError        ] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const filtersKey = JSON.stringify(filters);
 
   const fetchApplications = useCallback(async () => {
@@ -12,8 +12,8 @@ const useApplications = (filters = {}) => {
       setLoading(true);
       setError(null);
       const params = new URLSearchParams(JSON.parse(filtersKey)).toString();
-      const url    = `/api/applications${params ? `?${params}` : ""}`;
-      const res    = await api.get(url);
+      const url = `/api/applications${params ? `?${params}` : ""}`;
+      const res = await api.get(url);
       setApplications(res.data.applications);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to load applications");
@@ -40,7 +40,7 @@ const useApplications = (filters = {}) => {
       );
       return res.data.application;
     } catch (err) {
-      setApplications(previous); 
+      setApplications(previous);
       throw err;
     }
   };
@@ -59,6 +59,11 @@ const useApplications = (filters = {}) => {
     setApplications((prev) => prev.filter((a) => a._id !== id));
   };
 
+  const bulkDeleteApplications = async (ids) => {
+    await Promise.all(ids.map((id) => api.delete(`/api/applications/${id}`)));
+    setApplications((prev) => prev.filter((a) => !ids.includes(a._id)));
+  };
+
   return {
     applications,
     loading,
@@ -68,6 +73,7 @@ const useApplications = (filters = {}) => {
     updateApplication,
     createApplication,
     deleteApplication,
+    bulkDeleteApplications,
   };
 };
 
