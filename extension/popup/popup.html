@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { box-sizing: border-box; margin: 0; }
+    body {
+      width: 320px;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #f5f4ff;
+      padding: 16px;
+    }
+    .brand { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+    .brand-mark {
+      width: 24px; height: 24px; border-radius: 6px;
+      background: #5b3df5; display: flex; align-items: center; justify-content: center;
+      color: white; font-weight: bold; font-size: 12px;
+    }
+    .brand-name { font-size: 16px; font-weight: 700; }
+    .brand-name .hire { color: #1bd29c; }
+    .brand-name .lane { color: #5b3df5; }
+    .card {
+      background: white; border: 1px solid #f0f0f4; border-radius: 12px;
+      padding: 14px; margin-bottom: 10px;
+    }
+    .status-row { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #6b7280; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .btn {
+      width: 100%; height: 38px; border-radius: 10px; border: none;
+      background: #5b3df5; color: white; font-size: 13px; font-weight: 600;
+      cursor: pointer; margin-top: 8px;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-secondary { background: white; color: #5b3df5; border: 1px solid #e0e0ea; }
+    #fieldCount { font-size: 11px; color: #9ca3af; margin-top: 8px; text-align: center; }
+    #connectSection, #mainSection { display: none; }
+  </style>
+</head>
+<body>
+  <div class="brand">
+    <div class="brand-mark">H</div>
+    <div class="brand-name"><span class="hire">Hire</span><span class="lane">Lane</span></div>
+  </div>
+
+  <div id="connectSection" class="card">
+    <p style="font-size:12px; color:#6b7280; margin-bottom:10px;">
+      Connect your HireLane account to start autofilling applications.
+    </p>
+    <button id="connectBtn" class="btn">Connect Account</button>
+  </div>
+
+  <div id="mainSection">
+    <div class="card">
+      <div class="status-row">
+        <span class="dot" id="atsDot" style="background:#e0e0ea;"></span>
+        <span id="atsStatus">Checking page...</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <button id="fillBtn" class="btn" disabled>Fill All Fields</button>
+      <div id="fieldCount"></div>
+    </div>
+
+    <button id="disconnectBtn" class="btn btn-secondary">Disconnect</button>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
