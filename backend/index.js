@@ -18,11 +18,23 @@ const app = express();
 
 app.use(helmet());
 
-app.use(cors({
-    origin: config.FRONTEND_URL,
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (
+        !origin ||
+        origin === config.FRONTEND_URL ||
+        (config.isDev && origin.startsWith("chrome-extension://"))
+      ) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-}))
+  })
+);
 
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));

@@ -4,7 +4,9 @@ import { verifyAccessToken } from "../utils/signature.js";
 
 const protect = async (req, res, next) => {
   try {
-    const token = req.cookies?.accessToken;
+    const token =
+      req.cookies?.accessToken ||
+      req.headers.authorization?.split(" ")[1];
 
     if (!token) {
       return res.status(401).json({
@@ -22,7 +24,7 @@ const protect = async (req, res, next) => {
         return res.status(401).json({
           success: false,
           message: "Session expired, please login again",
-          code: "TOKEN_EXPIRED", 
+          code: "TOKEN_EXPIRED",
         });
       }
       return res.status(401).json({

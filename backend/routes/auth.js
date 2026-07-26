@@ -198,5 +198,10 @@ router.post("/logout-all", protect, async (req, res) => {
     res.json({ success: true, message: "Logged out from all devices." });
 });
 
+router.post("/extension-token", protect, async (req, res) => {
+  const token = createAccessToken(req.user);
+
+  res.json({ success: true, token, user: req.user });
+});
 
 export default router;
