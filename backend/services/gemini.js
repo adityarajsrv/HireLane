@@ -11,23 +11,25 @@ You are a resume parser. Extract structured data from this resume text.
 
 Return ONLY a valid JSON object with exactly these fields, no markdown, no explanation:
 {
-  "firstName": "",
-  "lastName": "",
-  "phone": "",
-  "location": "",
-  "linkedin": "",
-  "github": "",
-  "portfolio": "",
-  "skills": [],
-  "cvBullets": [],
-  "targetRoles": []
+  "firstName": "", "lastName": "", "phone": "", "location": "",
+  "linkedin": "", "github": "", "portfolio": "",
+  "skills": [], "cvBullets": [], "targetRoles": [],
+  "workExperience": [
+    { "company": "", "title": "", "startDate": "", "endDate": "", "description": "" }
+  ],
+  "education": [
+    { "school": "", "degree": "", "fieldOfStudy": "", "graduationYear": "", "gpa": "" }
+  ]
 }
 
 Rules:
+- workExperience: extract each distinct job/internship as a separate object,
+  most recent first. startDate/endDate in "YYYY-MM" format if determinable,
+  else best guess. endDate empty string if currently employed there.
+- education: extract each degree separately, most recent first.
 - cvBullets: extract 6-10 strong achievement bullets from experience section
 - skills: extract all technical skills mentioned
 - targetRoles: infer 2-3 job titles this person is targeting
-- If a field is not found, return empty string or empty array
 - Return ONLY the JSON, nothing else
 
 Resume text:
@@ -36,13 +38,7 @@ ${resumeText}
   });
 
   const text = interaction.text.trim();
-
-  const clean = text
-    .replace(/^```json\n?/, "")
-    .replace(/^```\n?/, "")
-    .replace(/\n?```$/, "")
-    .trim();
-
+  const clean = text.replace(/^```json\n?/, "").replace(/^```\n?/, "").replace(/\n?```$/, "").trim();
   return JSON.parse(clean);
 };
 

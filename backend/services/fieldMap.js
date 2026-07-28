@@ -1,5 +1,5 @@
 const FIELD_MAP = {
-  // ── Name fields ──────────────────────────────────────────
+  //  Name fields 
   "first name":              "firstName",
   "given name":              "firstName",
   "legal first name":        "firstName",
@@ -15,7 +15,7 @@ const FIELD_MAP = {
   "last":                    "lastName",
   "lname":                   "lastName",
 
-  // ── Contact fields ────────────────────────────────────────
+  //  Contact fields 
   "email":                   "email",
   "email address":           "email",
   "work email":              "email",
@@ -34,7 +34,7 @@ const FIELD_MAP = {
   "telephone":               "phone",
   "contact number":          "phone",
 
-  // ── Location fields ───────────────────────────────────────
+  //  Location fields 
   "location":                "location",
   "city":                    "location",
   "current location":        "location",
@@ -43,7 +43,7 @@ const FIELD_MAP = {
   "city, state":             "location",
   "city/state":              "location",
 
-  // ── Online presence ───────────────────────────────────────
+  //  Online presence 
   "linkedin":                "linkedin",
   "linkedin url":            "linkedin",
   "linkedin profile":        "linkedin",
@@ -61,7 +61,7 @@ const FIELD_MAP = {
   "website":                 "portfolio",
   "personal site":           "portfolio",
 
-  // ── Work preferences ──────────────────────────────────────
+  //  Work preferences 
   "expected salary":         "expectedSalary",
   "expected ctc":            "expectedSalary",
   "desired salary":          "expectedSalary",
@@ -82,13 +82,39 @@ const FIELD_MAP = {
   "visa status":             "workAuth",
   "right to work":           "workAuth",
 
-  // ── Cover letter ──────────────────────────────────────────
+  // Cover letter
   "cover letter":            "coverLetter",
   "cover note":              "coverLetter",
   "why do you want to work": "coverLetter",
   "why this company":        "coverLetter",
   "why are you interested":  "coverLetter",
   "tell us about yourself":  "coverLetter",
+
+  // Work History
+  "employer":            "workExperience.0.company",
+  "company name":        "workExperience.0.company",
+  "job title":           "workExperience.0.title",
+  "position":            "workExperience.0.title",
+  "start date":          "workExperience.0.startDate",
+  "end date":            "workExperience.0.endDate",
+  "job description":     "workExperience.0.description",
+
+  // Education
+  "school":              "education.0.school",
+  "university":          "education.0.school",
+  "degree":              "education.0.degree",
+  "major":               "education.0.fieldOfStudy",
+  "field of study":      "education.0.fieldOfStudy",
+  "graduation date":     "education.0.graduationYear",
+  "graduation year":     "education.0.graduationYear",
+  "gpa":                 "education.0.gpa",
+
+  // EEO / voluntary disclosure (all default to "prefer not to say" behavior)
+  "gender":              "gender",
+  "ethnicity":           "ethnicity",
+  "race":                "ethnicity",
+  "veteran status":      "veteranStatus",
+  "disability status":   "disabilityStatus",
 };
 
 

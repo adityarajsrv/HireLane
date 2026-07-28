@@ -1,15 +1,16 @@
-const API_BASE = "http://localhost:5000"; 
+const API_BASE = "http://localhost:5000";
 
 const connectSection = document.getElementById("connectSection");
-const mainSection    = document.getElementById("mainSection");
-const connectBtn     = document.getElementById("connectBtn");
-const disconnectBtn  = document.getElementById("disconnectBtn");
-const fillBtn        = document.getElementById("fillBtn");
-const atsStatus      = document.getElementById("atsStatus");
-const atsDot         = document.getElementById("atsDot");
-const fieldCountEl   = document.getElementById("fieldCount");
+const mainSection = document.getElementById("mainSection");
+const connectBtn = document.getElementById("connectBtn");
+const disconnectBtn = document.getElementById("disconnectBtn");
+const fillBtn = document.getElementById("fillBtn");
+const atsStatus = document.getElementById("atsStatus");
+const atsDot = document.getElementById("atsDot");
+const fieldCountEl = document.getElementById("fieldCount");
+const companyRoleEl = document.getElementById("companyRole");
 
-let cachedFields  = null;
+let cachedFields = null;
 let cachedProfile = null;
 
 const init = async () => {
@@ -37,7 +38,7 @@ const init = async () => {
 };
 
 connectBtn.addEventListener("click", async () => {
-  const email    = prompt("HireLane email:");
+  const email = prompt("HireLane email:");
   const password = prompt("HireLane password:");
   if (!email || !password) return;
 
@@ -94,14 +95,15 @@ fillBtn.addEventListener("click", async () => {
       return;
     }
 
+    if (extractRes.pageInfo) {
+      companyRoleEl.textContent = `${extractRes.pageInfo.company} — ${extractRes.pageInfo.role}`;
+    }
+
     fieldCountEl.textContent = `Found ${fields.length} fields. Classifying...`;
 
     const classifyRes = await fetch(`${API_BASE}/api/classify-fields`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${hirelaneToken}`,
-      },
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${hirelaneToken}` },
       body: JSON.stringify({ ats: currentATS, fields }),
     });
     const classifyData = await classifyRes.json();
@@ -112,6 +114,18 @@ fillBtn.addEventListener("click", async () => {
       fillBtn.textContent = "Fill All Fields";
       return;
     }
+
+    const mergedFields = fields
+      .map((f) => {
+        const classification = classifyData.classifications[f.label];
+        if (!classification) return null;
+        return {
+          label: f.label,
+          selector: f.selector,
+          profileKey: classification.profileKey,
+        };
+      })
+      .filter(Boolean);
 
     const profileRes = await fetch(`${API_BASE}/api/profile`, {
       headers: { "Authorization": `Bearer ${hirelaneToken}` },
@@ -125,11 +139,11 @@ fillBtn.addEventListener("click", async () => {
       return;
     }
 
-    fieldCountEl.textContent = `Filling ${Object.keys(classifyData.classifications).length} fields...`;
+    fieldCountEl.textContent = `Filling ${mergedFields.length} fields...`;
 
     const fillRes = await chrome.tabs.sendMessage(tab.id, {
       action: "FILL_ALL",
-      classifications: classifyData.classifications,
+      mergedFields,
       profile: profileData.profile,
     });
 

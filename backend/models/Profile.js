@@ -36,6 +36,24 @@ const profileSchema = new mongoose.Schema({
     skills: [{ type: String}],
     resumeFileName: { type: String, default: "" },
     resumeUploadedAt: { type: Date, default: null },
+    workExperience: [{
+      company:     { type: String, default: "" },
+      title:       { type: String, default: "" },
+      startDate:   { type: String, default: "" }, 
+      endDate:     { type: String, default: "" },
+      description: { type: String, default: "" },
+    }],
+    education: [{
+      school:      { type: String, default: "" },
+      degree:      { type: String, default: "" },
+      fieldOfStudy:{ type: String, default: "" },
+      graduationYear: { type: String, default: "" },
+      gpa:         { type: String, default: "" },
+    }],
+    gender:          { type: String, default: "" }, 
+    ethnicity:       { type: String, default: "" },
+    veteranStatus:   { type: String, default: "" },
+    disabilityStatus:{ type: String, default: "" },
 },{
     timestamps: true,
 })

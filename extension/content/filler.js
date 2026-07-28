@@ -6,30 +6,85 @@ const nativeTextareaSetter = Object.getOwnPropertyDescriptor(
   window.HTMLTextAreaElement.prototype, "value"
 ).set;
 
-const fillField = (element, value) => {
-  const setter = element.tagName === "TEXTAREA" ? nativeTextareaSetter : nativeInputSetter;
-  setter.call(element, value);
+const getFieldKind = (el) => {
+  if (el.tagName === "TEXTAREA") return "textarea";
+  if (el.tagName === "INPUT") return "input";
+  if (el.isContentEditable) return "contenteditable";
+  if (el.getAttribute("aria-haspopup") === "listbox" || el.getAttribute("role") === "combobox") {
+    return "dropdown";
+  }
+  return "unknown";
+};
 
+const fillTextLike = (element, value, kind) => {
+  if (kind === "textarea") {
+    nativeTextareaSetter.call(element, value);
+  } else if (kind === "input") {
+    nativeInputSetter.call(element, value);
+  } else if (kind === "contenteditable") {
+    element.textContent = value;
+  }
   element.dispatchEvent(new Event("input", { bubbles: true }));
   element.dispatchEvent(new Event("change", { bubbles: true }));
 };
 
-const fillAllFields = async (classifications, profile) => {
+const fillDropdown = async (element, value) => {
+  element.click();
+  await new Promise((r) => setTimeout(r, 300));
+  const options = Array.from(document.querySelectorAll(
+    '[role="option"], li[role="option"], div[role="option"]'
+  ));
+
+  const match = options.find((opt) =>
+    opt.textContent.trim().toLowerCase().includes(String(value).toLowerCase())
+  );
+
+  if (match) {
+    match.click();
+    return true;
+  }
+
+  document.activeElement?.blur();
+  document.body.click();
+  return false;
+};
+
+const resolveProfileValue = (profile, key) => {
+  const parts = key.split(".");
+  let value = profile;
+
+  for (const part of parts) {
+    if (value == null) return null;
+    value = value[part];
+  }
+  return value;
+};
+
+const fillAllFields = async (mergedFields, profile) => {
   let filledCount = 0;
 
-  for (const [label, data] of Object.entries(classifications)) {
-    if (!data.profileKey || data.profileKey === "unknown") continue;
+  for (const field of mergedFields) {
+    if (!field.profileKey || field.profileKey === "unknown") continue;
 
-    const element = document.querySelector(data.selector);
+    const element = document.querySelector(field.selector);
     if (!element) continue;
 
-    const value = profile[data.profileKey];
+    const value = resolveProfileValue(profile, field.profileKey);
     if (value === undefined || value === null || value === "") continue;
 
-    fillField(element, String(value));
-    filledCount++;
+    const kind = getFieldKind(element);
 
-    await new Promise((r) => setTimeout(r, 80 + Math.random() * 100));
+    if (kind === "dropdown") {
+      const success = await fillDropdown(element, value);
+      if (success) filledCount++;
+    } else if (kind === "unknown") {
+      continue;
+    } else {
+      fillTextLike(element, String(value), kind);
+      filledCount++;
+    }
+
+    await new Promise((r) => setTimeout(r, 120 + Math.random() * 120));
   }
 
   return filledCount;
@@ -37,7 +92,7 @@ const fillAllFields = async (classifications, profile) => {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "FILL_ALL") {
-    fillAllFields(message.classifications, message.profile).then((count) => {
+    fillAllFields(message.mergedFields, message.profile).then((count) => {
       sendResponse({ filledCount: count });
     });
     return true;
@@ -45,19 +100,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 document.addEventListener("submit", async (e) => {
-  const { currentATS, currentURL, pageTitle } = await chrome.storage.local.get([
-    "currentATS", "currentURL", "pageTitle"
-  ]);
-
-  const titleParts = (pageTitle || "").split(/[-|]/).map((s) => s.trim());
+  const { currentATS, currentURL } = await chrome.storage.local.get(["currentATS", "currentURL"]);
+  const pageInfo = scrapePageInfo();
 
   chrome.runtime.sendMessage({
     action: "LOG_APPLICATION",
     data: {
-      company: titleParts[0] || "Unknown Company",
-      role:    titleParts[1] || "Unknown Role",
-      ats:     currentATS || "other",
-      url:     currentURL,
+      company: pageInfo.company,
+      role: pageInfo.role,
+      ats: currentATS || "other",
+      url: currentURL,
     },
   });
 }, true);

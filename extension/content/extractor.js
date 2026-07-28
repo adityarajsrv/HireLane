@@ -1,4 +1,14 @@
 const findLabelForField = (el) => {
+  const automationId = el.getAttribute("data-automation-id");
+  if (automationId) {
+    const readable = automationId
+      .split(/[_\-]/)
+      .pop() 
+      .replace(/([a-z])([A-Z])/g, "$1 $2")
+      .toLowerCase();
+    if (readable.length > 1) return readable;
+  }
+
   if (el.id) {
     const label = document.querySelector(`label[for="${el.id}"]`);
     if (label) return label.textContent.trim();
@@ -14,6 +24,8 @@ const findLabelForField = (el) => {
 };
 
 const buildSelector = (el, index) => {
+  const automationId = el.getAttribute("data-automation-id");
+  if (automationId) return `[data-automation-id="${CSS.escape(automationId)}"]`;
   if (el.id) return `#${CSS.escape(el.id)}`;
   if (el.name) return `[name="${CSS.escape(el.name)}"]`;
   el.setAttribute("data-hirelane-idx", index);
@@ -47,6 +59,43 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "EXTRACT_FIELDS") {
     const fields = extractFields();
     sendResponse({ fields });
+  }
+  return true;
+});
+
+const scrapePageInfo = () => {
+  const workdayTitle = document.querySelector('[data-automation-id="jobPostingHeader"]');
+  if (workdayTitle) {
+    const text = workdayTitle.textContent.trim();
+    const companyEl = document.querySelector('[data-automation-id="company"]')
+      || document.querySelector('header a, header img[alt]');
+    return {
+      role: text || "Unknown Role",
+      company: companyEl?.textContent?.trim() || companyEl?.alt || window.location.hostname.split(".")[0],
+    };
+  }
+
+  const h1 = document.querySelector("h1");
+  if (h1 && h1.textContent.trim().length > 3) {
+    return {
+      role: h1.textContent.trim(),
+      company: document.querySelector('meta[property="og:site_name"]')?.content
+        || window.location.hostname.split(".")[0],
+    };
+  }
+
+  const titleParts = document.title.split(/[-|]/).map((s) => s.trim()).filter(Boolean);
+  return {
+    company: titleParts[0] || "Unknown Company",
+    role: titleParts[1] || titleParts[0] || "Unknown Role",
+  };
+};
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === "EXTRACT_FIELDS") {
+    const fields = extractFields();
+    const pageInfo = scrapePageInfo();
+    sendResponse({ fields, pageInfo });
   }
   return true;
 });

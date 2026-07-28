@@ -28,42 +28,42 @@ router.get('/', async (req, res) => {
 })
 
 router.put("/", async (req, res) => {
-  try {
-    const {
-      firstName, lastName, phone, location,
-      linkedin, github, portfolio,
-      workAuth, expectedSalary, noticePeriod,
-      targetRoles,
-    } = req.body;
+    try {
+        const {
+            firstName, lastName, phone, location,
+            linkedin, github, portfolio,
+            workAuth, expectedSalary, noticePeriod,
+            targetRoles,
+        } = req.body;
 
-    const updateData = {
-      firstName:      firstName      ?? "",
-      lastName:       lastName       ?? "",
-      phone:          phone          ?? "",
-      location:       location       ?? "",
-      linkedin:       linkedin       ?? "",
-      github:         github         ?? "",
-      portfolio:      portfolio      ?? "",
-      workAuth:       workAuth       ?? "",
-      expectedSalary: expectedSalary ?? 0,
-      noticePeriod:   noticePeriod   ?? "",
-      targetRoles:    targetRoles    ?? [],
-    };
+        const updateData = {
+            firstName: firstName ?? "",
+            lastName: lastName ?? "",
+            phone: phone ?? "",
+            location: location ?? "",
+            linkedin: linkedin ?? "",
+            github: github ?? "",
+            portfolio: portfolio ?? "",
+            workAuth: workAuth ?? "",
+            expectedSalary: expectedSalary ?? 0,
+            noticePeriod: noticePeriod ?? "",
+            targetRoles: targetRoles ?? [],
+        };
 
-    const profile = await Profile.findOneAndUpdate(
-      { userId: req.user._id },
-      { $set: updateData },
-      { returnDocument: "after", upsert: true, runValidators: true }
-    );
-    res.json({ success: true, profile });
-  } catch (err) {
-    if (err.name === "ValidationError") {
-      const messages = Object.values(err.errors).map((e) => e.message);
-      return res.status(400).json({ success: false, message: messages.join(". ") });
+        const profile = await Profile.findOneAndUpdate(
+            { userId: req.user._id },
+            { $set: updateData },
+            { returnDocument: "after", upsert: true, runValidators: true }
+        );
+        res.json({ success: true, profile });
+    } catch (err) {
+        if (err.name === "ValidationError") {
+            const messages = Object.values(err.errors).map((e) => e.message);
+            return res.status(400).json({ success: false, message: messages.join(". ") });
+        }
+        console.error("Update profile error:", err);
+        res.status(500).json({ success: false, message: "Failed to update profile." });
     }
-    console.error("Update profile error:", err);
-    res.status(500).json({ success: false, message: "Failed to update profile." });
-  }
 });
 
 router.post("/resume", upload.single("resume"), async (req, res) => {
@@ -95,13 +95,15 @@ router.post("/resume", upload.single("resume"), async (req, res) => {
                     skills: parsed.skills || [],
                     cvBullets: parsed.cvBullets || [],
                     targetRoles: parsed.targetRoles || [],
+                    workExperience: parsed.workExperience || [],
+                    education: parsed.education || [],
                     resumeText,
                     resumeFileName: req.file.originalname,
                     resumeUploadedAt: new Date(),
                 },
             },
             { returnDocument: "after", upsert: true }
-        )
+        );
         res.json({
             success: true,
             message: "Resume parsed successfully.",
