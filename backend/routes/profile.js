@@ -9,23 +9,43 @@ const router = express.Router();
 
 router.use(protect);
 
-router.get('/', async (req, res) => {
+router.get("/", async (req, res) => {
     try {
         const profile = await Profile.findOne({ userId: req.user._id });
 
         if (!profile) {
-            return res.json({
-                success: true,
-                profile: null,
-                isNew: true,
-            })
+            return res.json({ success: true, profile: null, isNew: true, completeness: 0 });
         }
-        res.json({ success: true, profile });
+
+        const checks = [
+            !!profile.firstName,
+            !!profile.lastName,
+            !!profile.phone,
+            !!profile.location,
+            !!profile.linkedin,
+            profile.skills?.length > 0,
+            profile.workExperience?.length > 0,
+            profile.education?.length > 0,
+            !!profile.gender,
+            !!profile.expectedSalary,
+            !!profile.noticePeriod,
+        ];
+        const completeness = Math.round(
+            (checks.filter(Boolean).length / checks.length) * 100
+        );
+
+        const missingItems = [];
+        if (!(profile.workExperience?.length > 0)) missingItems.push("work experience");
+        if (!(profile.education?.length > 0)) missingItems.push("education");
+        if (!profile.gender) missingItems.push("EEO preferences");
+        if (!profile.expectedSalary) missingItems.push("salary expectations");
+
+        res.json({ success: true, profile, completeness, missingItems });
     } catch (err) {
         console.error("Get profile error:", err);
         res.status(500).json({ success: false, message: "Failed to fetch profile" });
     }
-})
+});
 
 router.put("/", async (req, res) => {
     try {
@@ -33,7 +53,7 @@ router.put("/", async (req, res) => {
             firstName, lastName, phone, location,
             linkedin, github, portfolio,
             workAuth, expectedSalary, noticePeriod,
-            targetRoles,
+            targetRoles, workExperience, education,
         } = req.body;
 
         const updateData = {
@@ -48,6 +68,8 @@ router.put("/", async (req, res) => {
             expectedSalary: expectedSalary ?? 0,
             noticePeriod: noticePeriod ?? "",
             targetRoles: targetRoles ?? [],
+            workExperience: workExperience ?? [],
+            education: education ?? [],
         };
 
         const profile = await Profile.findOneAndUpdate(

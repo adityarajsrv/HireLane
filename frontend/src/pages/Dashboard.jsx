@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import useAnalytics    from "../hooks/useAnalytics.js";
 import useApplications from "../hooks/useApplications.js";
 import useQuota from "../hooks/useQuota.js";
+import ProfileCompletenessBanner from "../components/profile/ProfileCompletenessBanner.jsx";
 
 const TimelineStrip = ({ timeline }) => {
   const days = useMemo(() => {
@@ -246,13 +247,11 @@ const RecentApps = ({ applications, onViewAll }) => (
   </div>
 );
 
-// ── Dashboard Page ─────────────────────────────────────────
 const Dashboard = ({ onNavigate }) => {
   const { data: analytics, loading: analyticsLoading } = useAnalytics(30);
   const { applications, loading: appsLoading } = useApplications({ limit: 8 });
   const { applications: allApps } = useApplications(); 
 
-  // const quota = analytics?.quota;
   const isLoading = analyticsLoading || appsLoading;
 
   const weekDelta = useMemo(() => {
@@ -283,6 +282,7 @@ const Dashboard = ({ onNavigate }) => {
         <div style={{ fontFamily: "JetBrains Mono, monospace", fontSize: 11, color: "#9ca3af", padding: "24px 0" }}>Loading dashboard...</div>
       ) : (
         <>
+          <ProfileCompletenessBanner onNavigate={onNavigate} />
           <TimelineStrip timeline={analytics?.timeline || []} />
           <DashboardStatsWithQuota overview={analytics?.overview} weekDelta={weekDelta} />
           <div className="grid gap-4" style={{ gridTemplateColumns: "3fr 2fr" }}>
