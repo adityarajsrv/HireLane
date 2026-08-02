@@ -1,27 +1,27 @@
 const API_BASE = "http://localhost:5000";
 
 const connectSection = document.getElementById("connectSection");
-const mainSection    = document.getElementById("mainSection");
+const mainSection = document.getElementById("mainSection");
 const confirmSection = document.getElementById("confirmSection");
-const connectBtn     = document.getElementById("connectBtn");
-const disconnectBtn  = document.getElementById("disconnectBtn");
-const startFillBtn   = document.getElementById("startFillBtn");
-const atsStatus      = document.getElementById("atsStatus");
-const atsDot         = document.getElementById("atsDot");
-const fieldCountEl   = document.getElementById("fieldCount");
+const connectBtn = document.getElementById("connectBtn");
+const disconnectBtn = document.getElementById("disconnectBtn");
+const startFillBtn = document.getElementById("startFillBtn");
+const atsStatus = document.getElementById("atsStatus");
+const atsDot = document.getElementById("atsDot");
+const fieldCountEl = document.getElementById("fieldCount");
 
-const companyInput   = document.getElementById("companyInput");
-const roleInput      = document.getElementById("roleInput");
-const atsInput       = document.getElementById("atsInput");
-const ctcInput       = document.getElementById("ctcInput");
+const companyInput = document.getElementById("companyInput");
+const roleInput = document.getElementById("roleInput");
+const atsInput = document.getElementById("atsInput");
+const ctcInput = document.getElementById("ctcInput");
 const confirmFillBtn = document.getElementById("confirmFillBtn");
 const cancelConfirmBtn = document.getElementById("cancelConfirmBtn");
 
-let extractedFields = null; 
+let extractedFields = null;
 
 const showSection = (name) => {
   connectSection.style.display = name === "connect" ? "block" : "none";
-  mainSection.style.display    = name === "main"    ? "block" : "none";
+  mainSection.style.display = name === "main" ? "block" : "none";
   confirmSection.style.display = name === "confirm" ? "block" : "none";
 };
 
@@ -46,7 +46,7 @@ const init = async () => {
 };
 
 connectBtn.addEventListener("click", async () => {
-  const email    = prompt("HireLane email:");
+  const email = prompt("HireLane email:");
   const password = prompt("HireLane password:");
   if (!email || !password) return;
 
@@ -98,9 +98,37 @@ startFillBtn.addEventListener("click", async () => {
 
     const guess = extractRes.pageInfo || {};
     companyInput.value = guess.company === "Unknown Company" ? "" : (guess.company || "");
-    roleInput.value    = guess.role === "Unknown Role" ? "" : (guess.role || "");
-    atsInput.value      = currentATS || "other";
-    ctcInput.value      = "";
+    roleInput.value = guess.role === "Unknown Role" ? "" : (guess.role || "");
+    atsInput.value = currentATS || "other";
+    ctcInput.value = "";
+
+    const { sessionKey, hirelaneToken } = await chrome.storage.local.get([
+      "sessionKey",
+      "hirelaneToken",
+    ]);
+
+    if (sessionKey) {
+      const checkRes = await fetch(
+        `${API_BASE}/api/applications?sessionKey=${encodeURIComponent(sessionKey)}`,
+        {
+          headers: {
+            "Authorization": `Bearer ${hirelaneToken}`,
+          },
+        }
+      );
+
+      const checkData = await checkRes.json();
+      const existing = checkData.applications?.[0];
+
+      if (existing) {
+        companyInput.value = existing.company;
+        roleInput.value = existing.role;
+        atsInput.value = existing.ats;
+
+        fieldCountEl.textContent = "Continuing your in-progress application.";
+        fieldCountEl.style.color = "#5b3df5";
+      }
+    }
 
     showSection("confirm");
   } catch (err) {
@@ -118,9 +146,9 @@ cancelConfirmBtn.addEventListener("click", () => {
 
 confirmFillBtn.addEventListener("click", async () => {
   const company = companyInput.value.trim();
-  const role    = roleInput.value.trim();
-  const ats     = atsInput.value;
-  const ctc     = ctcInput.value ? Number(ctcInput.value) : null;
+  const role = roleInput.value.trim();
+  const ats = atsInput.value;
+  const ctc = ctcInput.value ? Number(ctcInput.value) : null;
 
   if (!company || !role) {
     fieldCountEl.textContent = "Company and role are required.";
@@ -134,7 +162,12 @@ confirmFillBtn.addEventListener("click", async () => {
 
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    const { hirelaneToken } = await chrome.storage.local.get("hirelaneToken");
+    const { hirelaneToken, currentATS, sessionKey } =
+      await chrome.storage.local.get([
+        "hirelaneToken",
+        "currentATS",
+        "sessionKey",
+      ]);
 
     fieldCountEl.textContent = `Classifying ${extractedFields.length} fields...`;
 
@@ -181,16 +214,49 @@ confirmFillBtn.addEventListener("click", async () => {
     fieldCountEl.textContent = `Filled ${fillRes.filledCount} of ${extractedFields.length} fields.`;
     fieldCountEl.style.color = "#1bd29c";
 
-    await fetch(`${API_BASE}/api/applications`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${hirelaneToken}` },
-      body: JSON.stringify({
-        company, role, ats,
-        matchScore: ctc ? null : null,
-        status: "applied",
-      }),
+    const jdRes = await chrome.tabs.sendMessage(tab.id, {
+      action: "GET_JD_TEXT",
     });
 
+    let matchScore = null;
+
+    if (jdRes?.jobDescription) {
+      try {
+        const scoreRes = await fetch(`${API_BASE}/api/jdmatch/score`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${hirelaneToken}`,
+          },
+          body: JSON.stringify({
+            jobDescription: jdRes.jobDescription,
+          }),
+        });
+
+        const scoreData = await scoreRes.json();
+
+        if (scoreData.success) {
+          matchScore = scoreData.score;
+        }
+      } catch {
+      }
+    }
+
+    await fetch(`${API_BASE}/api/applications`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${hirelaneToken}`,
+      },
+      body: JSON.stringify({
+        company,
+        role,
+        ats: currentATS || ats,
+        status: "applied",
+        sessionKey,
+        matchScore: ctc ? null : null,
+      }),
+    });
   } catch (err) {
     fieldCountEl.textContent = "Error: " + err.message;
     fieldCountEl.style.color = "#e24b4a";

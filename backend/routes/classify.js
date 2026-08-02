@@ -4,13 +4,14 @@ import { protect } from '../middlewares/authMiddleware.js';
 import { classifyFromMap } from "../services/fieldMap.js";
 import { classifyField } from "../services/gemini.js";
 import { generateFieldSignature } from "../utils/signature.js";
-import { checkAICallQuota } from '../middlewares/quota.js';
+import { checkAICallQuotaRedis } from '../middlewares/quota.js';
+import redis from "../config/redis.js";
 
 const router = express.Router();
 
 router.use(protect)
 
-router.post('/', checkAICallQuota, async (req, res) => {
+router.post('/', checkAICallQuotaRedis, async (req, res) => {
     try {
         const { ats, fields } = req.body;
         if (!ats || !fields || !Array.isArray(fields) || fields.length === 0) {
@@ -42,13 +43,38 @@ router.post('/', checkAICallQuota, async (req, res) => {
             }
         }
         if (cacheMisses.length > 0) {
-            const signatures = cacheMisses.map(({ label, type }) =>
+            const redisKeys = cacheMisses.map(({ label, type }) =>
+                `field:${generateFieldSignature(ats, label, type)}`
+            );
+
+            const redisResults =
+                redisKeys.length > 0
+                    ? await redis.mget(redisKeys)
+                    : [];
+
+            const stillMissing = [];
+
+            redisResults.forEach((cached, i) => {
+                if (cached) {
+                    const parsed = JSON.parse(cached);
+
+                    classifications[cacheMisses[i].label] = {
+                        profileKey: parsed.profileKey,
+                        source: "redis",
+                        confidence: parsed.confidence,
+                    };
+                } else {
+                    stillMissing.push(cacheMisses[i]);
+                }
+            });
+
+            const signatures = stillMissing.map(({ label, type }) =>
                 generateFieldSignature(ats, label, type)
-            )
+            );
 
             const cacheHits = await FieldCache.find({
                 signature: { $in: signatures },
-            })
+            });
 
             const cacheMap = {};
             for (const hit of cacheHits) {
@@ -57,7 +83,7 @@ router.post('/', checkAICallQuota, async (req, res) => {
 
             const aiQueue = [];
 
-            for (const { label, type } of cacheMisses) {
+            for (const { label, type } of stillMissing) {
                 const sig = generateFieldSignature(ats, label, type);
                 const cached = cacheMap[sig];
 
@@ -67,6 +93,17 @@ router.post('/', checkAICallQuota, async (req, res) => {
                         source: "cache",
                         confidence: cached.confidence,
                     };
+
+                    await redis.set(
+                        `field:${sig}`,
+                        JSON.stringify({
+                            profileKey: cached.profileKey,
+                            confidence: cached.confidence,
+                        }),
+                        "EX",
+                        60 * 60 * 24 * 7
+                    );
+
                     FieldCache.findByIdAndUpdate(cached._id, {
                         $inc: { hitCount: 1 },
                     }).catch(() => { });
@@ -106,6 +143,16 @@ router.post('/', checkAICallQuota, async (req, res) => {
                         }
                     );
 
+                    await redis.set(
+                        `field:${sig}`,
+                        JSON.stringify({
+                            profileKey,
+                            confidence,
+                        }),
+                        "EX",
+                        60 * 60 * 24 * 7
+                    );
+
                 } catch (aiErr) {
                     console.error(`AI classification failed for "${label}":`, aiErr.message);
                     classifications[label] = {
@@ -121,6 +168,7 @@ router.post('/', checkAICallQuota, async (req, res) => {
         const stats = {
             total: sources.length,
             fromMap: sources.filter((s) => s === "map").length,
+            fromRedis: sources.filter((s) => s === "redis").length,
             fromCache: sources.filter((s) => s === "cache").length,
             fromAI: sources.filter((s) => s === "ai").length,
             fromError: sources.filter((s) => s === "ai_error").length,

@@ -1,6 +1,7 @@
 import express from "express";
 import JDMatchResult from "../models/JDMatchResult.js";
 import { protect } from "../middlewares/authMiddleware.js";
+import Profile from "../models/Profile.js";
 
 const router = express.Router();
 router.use(protect);
@@ -77,6 +78,42 @@ router.get("/insights", async (req, res) => {
   } catch (err) {
     console.error("JD insights error:", err);
     res.status(500).json({ success: false, message: "Failed to fetch insights." });
+  }
+});
+
+const COMMON_SKILLS = [
+  "kafka", "grpc", "kubernetes", "k8s", "rust", "golang", "go",
+  "terraform", "aws", "gcp", "azure", "spark", "flink", "redis",
+  "postgresql", "elasticsearch", "graphql", "microservices",
+];
+
+router.post("/score", async (req, res) => {
+  try {
+    const { jobDescription } = req.body;
+    if (!jobDescription || jobDescription.length < 50) {
+      return res.status(400).json({ success: false, message: "jobDescription too short to score." });
+    }
+
+    const profile = await Profile.findOne({ userId: req.user._id });
+    if (!profile?.skills?.length) {
+      return res.status(400).json({ success: false, message: "Upload your resume first." });
+    }
+
+    const jdLower = jobDescription.toLowerCase();
+    const userSkills = profile.skills;
+
+    const matched = userSkills.filter((s) => jdLower.includes(s.toLowerCase()));
+    const missing = COMMON_SKILLS.filter(
+      (s) => jdLower.includes(s) && !userSkills.some((us) => us.toLowerCase() === s)
+    );
+
+    const total = matched.length + missing.length;
+    const score = total > 0 ? Math.round((matched.length / total) * 100) : 65;
+
+    res.json({ success: true, score, matched: matched.slice(0, 8), missing: missing.slice(0, 5) });
+  } catch (err) {
+    console.error("Score error:", err);
+    res.status(500).json({ success: false, message: "Scoring failed." });
   }
 });
 

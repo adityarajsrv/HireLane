@@ -1,5 +1,6 @@
 import User from "../models/User.js";
 import UsageQuota from "../models/UsageQuota.js";
+import redis from "../config/redis.js";
 
 const LIMITS = {
     free: {fillsMonth: 15, aiCallsDay: 5},
@@ -33,29 +34,34 @@ const getQuota = async (userId) => {
     return quota;
 }
 
-export const checkAICallQuota = async (req, res, next) => {
+export const checkAICallQuotaRedis = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user._id);
-    const quota = await getQuota(req.user._id);
-    const limit = LIMITS[user.plan].aiCallsDay;
+    const user = req.user;
+    const limit = user.plan === "pro" ? Infinity : 5;
 
-    if (quota.aiCallsDay >= limit) {
+    if (limit === Infinity) return next();
+
+    const today = new Date().toISOString().slice(0, 10); 
+    const key = `quota:ai:${user._id}:${today}`;
+    const count = await redis.incr(key);
+
+    if (count === 1) {
+      await redis.expire(key, 60 * 60 * 24);
+    }
+
+    if (count > limit) {
       return res.status(429).json({
         success: false,
-        message: `Daily AI call limit reached (${limit}/day on ${user.plan} plan).`,
+        message: `Daily AI call limit reached (${limit}/day on free plan).`,
         code: "AI_QUOTA_EXCEEDED",
-        resetAt: quota.dayResetAt,
       });
     }
 
-    quota.aiCallsDay += 1;
-    await quota.save();
-    req.quotaRemaining = limit - quota.aiCallsDay;
-
+    req.quotaRemaining = limit - count;
     next();
   } catch (err) {
-    console.error("Quota check error:", err);
-    res.status(500).json({ success: false, message: "Quota check failed." });
+    console.error("Redis quota check error:", err);
+    next();
   }
 };
 

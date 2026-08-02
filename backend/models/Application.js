@@ -55,8 +55,13 @@ const applicationSchema = new mongoose.Schema(
             default: Date.now,
         },
         expectedCTC: {
-            type: Number, 
-            default: null 
+            type: Number,
+            default: null
+        },
+        sessionKey: {
+            type: String,
+            default: null,
+            index: true,
         },
     },
     { timestamps: true }
@@ -64,6 +69,7 @@ const applicationSchema = new mongoose.Schema(
 
 applicationSchema.index({ userId: 1, appliedAt: -1 });
 applicationSchema.index({ userId: 1, status: 1 });
+applicationSchema.index({ userId: 1, sessionKey: 1 });
 
 const Application = mongoose.model("Application", applicationSchema);
 

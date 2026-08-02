@@ -53,15 +53,7 @@ const extractFields = () => {
   });
 
   return fields;
-};
-
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === "EXTRACT_FIELDS") {
-    const fields = extractFields();
-    sendResponse({ fields });
-  }
-  return true;
-});
+}
 
 const scrapePageInfo = () => {
   const workdayTitle = document.querySelector('[data-automation-id="jobPostingHeader"]');
@@ -91,11 +83,38 @@ const scrapePageInfo = () => {
   };
 };
 
+const scrapeJobDescriptionText = () => {
+  const candidates = [
+    '[data-automation-id="jobPostingDescription"]', 
+    '.job__description',                              
+    '#content .section-wrapper',                       
+    'main', 'article',                                   
+  ];
+
+  for (const selector of candidates) {
+    const el = document.querySelector(selector);
+    if (el && el.textContent.trim().length > 200) {
+      return el.textContent.trim().slice(0, 5000);
+    }
+  }
+
+  return "";
+};
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "EXTRACT_FIELDS") {
     const fields = extractFields();
     const pageInfo = scrapePageInfo();
-    sendResponse({ fields, pageInfo });
+
+    sendResponse({
+      fields,
+      pageInfo,
+    });
+  } else if (message.action === "GET_JD_TEXT") {
+    sendResponse({
+      jobDescription: scrapeJobDescriptionText(),
+    });
   }
+
   return true;
 });

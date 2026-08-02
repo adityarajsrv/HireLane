@@ -18,7 +18,7 @@ const config = {
     JWT_SECRET: requireEnv("JWT_SECRET"),
     JWT_EXPIRES_IN: requireEnv("JWT_EXPIRES_IN") || "7d",
     GEMINI_API_KEY: requireEnv("GEMINI_API_KEY"),
-    // REDIS_URL: requireEnv("REDIS_URL"),
+    REDIS_URL: requireEnv("REDIS_URL"),
 
     isDev: process.env.NODE_ENV === "development",
     isProd: process.env.NODE_ENV === "production",
