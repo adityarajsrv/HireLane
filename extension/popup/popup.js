@@ -1,28 +1,33 @@
 const API_BASE = "http://localhost:5000";
 
-const connectSection = document.getElementById("connectSection");
-const mainSection = document.getElementById("mainSection");
-const confirmSection = document.getElementById("confirmSection");
-const connectBtn = document.getElementById("connectBtn");
-const disconnectBtn = document.getElementById("disconnectBtn");
-const startFillBtn = document.getElementById("startFillBtn");
-const atsStatus = document.getElementById("atsStatus");
-const atsDot = document.getElementById("atsDot");
-const fieldCountEl = document.getElementById("fieldCount");
-
-const companyInput = document.getElementById("companyInput");
-const roleInput = document.getElementById("roleInput");
-const atsInput = document.getElementById("atsInput");
-const ctcInput = document.getElementById("ctcInput");
-const confirmFillBtn = document.getElementById("confirmFillBtn");
+const connectSection   = document.getElementById("connectSection");
+const mainSection      = document.getElementById("mainSection");
+const confirmSection   = document.getElementById("confirmSection");
+const connectBtn       = document.getElementById("connectBtn");
+const disconnectBtn    = document.getElementById("disconnectBtn");
+const startFillBtn     = document.getElementById("startFillBtn");
+const atsStatus        = document.getElementById("atsStatus");
+const atsDot           = document.getElementById("atsDot");
+const fieldCountEl     = document.getElementById("fieldCount");
+const companyInput     = document.getElementById("companyInput");
+const roleInput        = document.getElementById("roleInput");
+const atsInput         = document.getElementById("atsInput");
+const ctcInput         = document.getElementById("ctcInput");
+const confirmFillBtn   = document.getElementById("confirmFillBtn");
 const cancelConfirmBtn = document.getElementById("cancelConfirmBtn");
 
-let extractedFields = null;
+let extractedFields  = null;
+let currentSessionData = null;
 
 const showSection = (name) => {
   connectSection.style.display = name === "connect" ? "block" : "none";
-  mainSection.style.display = name === "main" ? "block" : "none";
+  mainSection.style.display    = name === "main"    ? "block" : "none";
   confirmSection.style.display = name === "confirm" ? "block" : "none";
+};
+
+const getActiveTab = async () => {
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  return tab;
 };
 
 const init = async () => {
@@ -31,14 +36,34 @@ const init = async () => {
 
   showSection("main");
 
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  const { currentATS } = await chrome.storage.local.get("currentATS");
+  try {
+    const profRes = await fetch(`${API_BASE}/api/profile`, {
+      headers: { "Authorization": `Bearer ${hirelaneToken}` },
+    });
+    const profData = await profRes.json();
 
-  if (currentATS) {
-    atsStatus.textContent = `Detected: ${currentATS}`;
-    atsDot.style.background = "#1bd29c";
-    startFillBtn.disabled = false;
-  } else {
+    if (profData.profile && profData.profile.extensionEnabled === false) {
+      atsStatus.textContent = "Extension disabled in HireLane settings";
+      atsDot.style.background = "#e24b4a";
+      startFillBtn.disabled = true;
+      return;
+    }
+  } catch {
+  }
+
+  const tab = await getActiveTab();
+  try {
+    const stateRes = await chrome.tabs.sendMessage(tab.id, { action: "GET_STATE" });
+    if (stateRes?.ats) {
+      atsStatus.textContent = `Detected: ${stateRes.ats}`;
+      atsDot.style.background = "#1bd29c";
+      startFillBtn.disabled = false;
+    } else {
+      atsStatus.textContent = "No supported ATS on this page";
+      atsDot.style.background = "#e24b4a";
+      startFillBtn.disabled = true;
+    }
+  } catch {
     atsStatus.textContent = "No supported ATS on this page";
     atsDot.style.background = "#e24b4a";
     startFillBtn.disabled = true;
@@ -46,7 +71,7 @@ const init = async () => {
 };
 
 connectBtn.addEventListener("click", async () => {
-  const email = prompt("HireLane email:");
+  const email    = prompt("HireLane email:");
   const password = prompt("HireLane password:");
   if (!email || !password) return;
 
@@ -60,9 +85,7 @@ connectBtn.addEventListener("click", async () => {
     const loginData = await loginRes.json();
     if (!loginData.success) { alert(loginData.message || "Login failed"); return; }
 
-    const tokenRes = await fetch(`${API_BASE}/auth/extension-token`, {
-      method: "POST", credentials: "include",
-    });
+    const tokenRes = await fetch(`${API_BASE}/auth/extension-token`, { method: "POST", credentials: "include" });
     const tokenData = await tokenRes.json();
     if (!tokenData.success) { alert("Could not get extension token"); return; }
 
@@ -83,52 +106,45 @@ startFillBtn.addEventListener("click", async () => {
   startFillBtn.textContent = "Reading page...";
 
   try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    const { currentATS } = await chrome.storage.local.get("currentATS");
+    const tab = await getActiveTab();
+    const { hirelaneToken } = await chrome.storage.local.get("hirelaneToken");
 
     const extractRes = await chrome.tabs.sendMessage(tab.id, { action: "EXTRACT_FIELDS" });
     extractedFields = extractRes.fields;
+    currentSessionData = { ats: extractRes.ats, sessionKey: extractRes.sessionKey };
 
     if (!extractedFields || extractedFields.length === 0) {
       alert("No fillable fields found on this page.");
-      startFillBtn.disabled = false;
-      startFillBtn.textContent = "Fill Application";
       return;
     }
 
-    const guess = extractRes.pageInfo || {};
-    companyInput.value = guess.company === "Unknown Company" ? "" : (guess.company || "");
-    roleInput.value = guess.role === "Unknown Role" ? "" : (guess.role || "");
-    atsInput.value = currentATS || "other";
-    ctcInput.value = "";
+    let prefillCompany = extractRes.pageInfo.company;
+    let prefillRole    = extractRes.pageInfo.role;
 
-    const { sessionKey, hirelaneToken } = await chrome.storage.local.get([
-      "sessionKey",
-      "hirelaneToken",
-    ]);
-
-    if (sessionKey) {
-      const checkRes = await fetch(
-        `${API_BASE}/api/applications?sessionKey=${encodeURIComponent(sessionKey)}`,
-        {
-          headers: {
-            "Authorization": `Bearer ${hirelaneToken}`,
-          },
+    if (extractRes.sessionKey) {
+      try {
+        const checkRes = await fetch(
+          `${API_BASE}/api/applications?sessionKey=${encodeURIComponent(extractRes.sessionKey)}`,
+          { headers: { "Authorization": `Bearer ${hirelaneToken}` } }
+        );
+        const checkData = await checkRes.json();
+        const existing = checkData.applications?.[0];
+        if (existing) {
+          prefillCompany = existing.company;
+          prefillRole    = existing.role;
+          fieldCountEl.textContent = "Continuing your in-progress application.";
+          fieldCountEl.style.color = "#5b3df5";
+        } else {
+          fieldCountEl.textContent = "";
         }
-      );
-
-      const checkData = await checkRes.json();
-      const existing = checkData.applications?.[0];
-
-      if (existing) {
-        companyInput.value = existing.company;
-        roleInput.value = existing.role;
-        atsInput.value = existing.ats;
-
-        fieldCountEl.textContent = "Continuing your in-progress application.";
-        fieldCountEl.style.color = "#5b3df5";
+      } catch {
       }
     }
+
+    companyInput.value = prefillCompany === "Unknown Company" ? "" : prefillCompany;
+    roleInput.value    = prefillRole === "Unknown Role" ? "" : prefillRole;
+    atsInput.value      = extractRes.ats || "other";
+    ctcInput.value      = "";
 
     showSection("confirm");
   } catch (err) {
@@ -141,14 +157,14 @@ startFillBtn.addEventListener("click", async () => {
 
 cancelConfirmBtn.addEventListener("click", () => {
   extractedFields = null;
+  currentSessionData = null;
   showSection("main");
 });
 
 confirmFillBtn.addEventListener("click", async () => {
   const company = companyInput.value.trim();
-  const role = roleInput.value.trim();
-  const ats = atsInput.value;
-  const ctc = ctcInput.value ? Number(ctcInput.value) : null;
+  const role    = roleInput.value.trim();
+  const ats     = atsInput.value;
 
   if (!company || !role) {
     fieldCountEl.textContent = "Company and role are required.";
@@ -161,13 +177,8 @@ confirmFillBtn.addEventListener("click", async () => {
   fieldCountEl.style.color = "#9ca3af";
 
   try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    const { hirelaneToken, currentATS, sessionKey } =
-      await chrome.storage.local.get([
-        "hirelaneToken",
-        "currentATS",
-        "sessionKey",
-      ]);
+    const tab = await getActiveTab();
+    const { hirelaneToken } = await chrome.storage.local.get("hirelaneToken");
 
     fieldCountEl.textContent = `Classifying ${extractedFields.length} fields...`;
 
@@ -211,52 +222,35 @@ confirmFillBtn.addEventListener("click", async () => {
       profile: profileData.profile,
     });
 
+    let matchScore = null;
+    try {
+      const jdRes = await chrome.tabs.sendMessage(tab.id, { action: "GET_JD_TEXT" });
+      if (jdRes?.jobDescription && jdRes.jobDescription.length > 100) {
+        const scoreRes = await fetch(`${API_BASE}/api/jdmatch/score`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${hirelaneToken}` },
+          body: JSON.stringify({ jobDescription: jdRes.jobDescription }),
+        });
+        const scoreData = await scoreRes.json();
+        if (scoreData.success) matchScore = scoreData.score;
+      }
+    } catch {
+    }
+
     fieldCountEl.textContent = `Filled ${fillRes.filledCount} of ${extractedFields.length} fields.`;
     fieldCountEl.style.color = "#1bd29c";
 
-    const jdRes = await chrome.tabs.sendMessage(tab.id, {
-      action: "GET_JD_TEXT",
-    });
-
-    let matchScore = null;
-
-    if (jdRes?.jobDescription) {
-      try {
-        const scoreRes = await fetch(`${API_BASE}/api/jdmatch/score`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${hirelaneToken}`,
-          },
-          body: JSON.stringify({
-            jobDescription: jdRes.jobDescription,
-          }),
-        });
-
-        const scoreData = await scoreRes.json();
-
-        if (scoreData.success) {
-          matchScore = scoreData.score;
-        }
-      } catch {
-      }
-    }
-
     await fetch(`${API_BASE}/api/applications`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${hirelaneToken}`,
-      },
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${hirelaneToken}` },
       body: JSON.stringify({
-        company,
-        role,
-        ats: currentATS || ats,
+        company, role, ats,
         status: "applied",
-        sessionKey,
-        matchScore: ctc ? null : null,
+        sessionKey: currentSessionData?.sessionKey || null,
+        matchScore,
       }),
     });
+
   } catch (err) {
     fieldCountEl.textContent = "Error: " + err.message;
     fieldCountEl.style.color = "#e24b4a";

@@ -1,11 +1,31 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 import api from "../lib/axios.js";
+import { useEffect } from "react";
 
 const Settings = () => {
   const { user, logout } = useAuth();
   const [loggingOutAll, setLoggingOutAll] = useState(false);
   const [msg, setMsg] = useState({ text: "", ok: true });
+  const [extensionEnabled, setExtensionEnabled] = useState(true);
+  const [toggling, setToggling] = useState(false);
+
+  useEffect(() => {
+    api.get("/api/profile").then((res) => {
+      if (res.data.profile) setExtensionEnabled(res.data.profile.extensionEnabled !== false);
+    });
+  }, []);
+
+  const handleToggleExtension = async () => {
+    setToggling(true);
+    const newValue = !extensionEnabled;
+    try {
+      await api.put("/api/profile", { extensionEnabled: newValue });
+      setExtensionEnabled(newValue);
+    } finally {
+      setToggling(false);
+    }
+  };
 
   const showMsg = (text, ok = true) => {
     setMsg({ text, ok });
@@ -26,7 +46,7 @@ const Settings = () => {
   };
 
   const sectionStyle = { background: "white", border: "1px solid #f0f0f4", borderRadius: 16, padding: 20, marginBottom: 16 };
-  const labelStyle   = { fontSize: 9, fontFamily: "JetBrains Mono, monospace", color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4, display: "block" };
+  const labelStyle = { fontSize: 9, fontFamily: "JetBrains Mono, monospace", color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4, display: "block" };
 
   return (
     <div>
@@ -102,6 +122,34 @@ const Settings = () => {
           >
             {loggingOutAll ? "Logging out..." : "Logout of all devices"}
           </button>
+        </div>
+        <div style={sectionStyle}>
+          <div style={{ fontSize: 14, fontFamily: "DM Sans, sans-serif", fontWeight: 500, color: "#0a0a0f", marginBottom: 4 }}>
+            Extension Access
+          </div>
+          <p style={{ fontSize: 12, fontFamily: "DM Sans, sans-serif", color: "#6b7280", marginBottom: 16 }}>
+            Turn off the HireLane extension without uninstalling it — useful if you want to pause autofill temporarily.
+          </p>
+          <div className="flex items-center justify-between">
+            <span style={{ fontSize: 12, fontFamily: "DM Sans, sans-serif", color: "#374151" }}>
+              Extension is currently {extensionEnabled ? "enabled" : "disabled"}
+            </span>
+            <button
+              onClick={handleToggleExtension}
+              disabled={toggling}
+              style={{
+                width: 36, height: 20, borderRadius: 10, border: "none",
+                cursor: toggling ? "not-allowed" : "pointer",
+                background: extensionEnabled ? "#5b3df5" : "#e0e0ea",
+                position: "relative", transition: "background 200ms", flexShrink: 0,
+              }}
+            >
+              <span style={{
+                position: "absolute", top: 2, left: extensionEnabled ? 18 : 2,
+                width: 16, height: 16, borderRadius: "50%", background: "white", transition: "left 200ms",
+              }} />
+            </button>
+          </div>
         </div>
         <div style={{ ...sectionStyle, border: "1px solid #fcebeb" }}>
           <div style={{ fontSize: 14, fontFamily: "DM Sans, sans-serif", fontWeight: 500, color: "#e24b4a", marginBottom: 4 }}>

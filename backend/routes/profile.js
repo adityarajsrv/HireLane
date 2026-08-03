@@ -54,6 +54,8 @@ router.put("/", async (req, res) => {
             linkedin, github, portfolio,
             workAuth, expectedSalary, noticePeriod,
             targetRoles, workExperience, education,
+            gender, ethnicity, veteranStatus, disabilityStatus,
+            extensionEnabled, onboardingCompleted,
         } = req.body;
 
         const updateData = {
@@ -70,7 +72,14 @@ router.put("/", async (req, res) => {
             targetRoles: targetRoles ?? [],
             workExperience: workExperience ?? [],
             education: education ?? [],
+            gender: gender ?? "",
+            ethnicity: ethnicity ?? "",
+            veteranStatus: veteranStatus ?? "",
+            disabilityStatus: disabilityStatus ?? "",
         };
+
+        if (extensionEnabled !== undefined) updateData.extensionEnabled = extensionEnabled;
+        if (onboardingCompleted !== undefined) updateData.onboardingCompleted = onboardingCompleted;
 
         const profile = await Profile.findOneAndUpdate(
             { userId: req.user._id },

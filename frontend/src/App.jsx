@@ -12,10 +12,27 @@ import Profile from "./pages/Profile.jsx";
 import JDMatch from "./pages/JDMatch.jsx";
 import Settings from "./pages/Settings.jsx";
 import Insights from "./pages/Insights.jsx";
+import useProfile from "./hooks/useProfile.js";
+import OnboardingWizard from "./pages/OnboardingWizard.jsx";
 
 const DashboardApp = () => {
   const [activePage, setActivePage] = useState("dashboard");
   const [globalSearch, setGlobalSearch] = useState("");
+  const [skippedOnboarding, setSkippedOnboarding] = useState(false);
+
+  const { profile, loading } = useProfile();
+
+  if (loading) return null;
+
+  const needsOnboarding = (!profile || profile.onboardingCompleted !== true) && !skippedOnboarding;
+
+  if (needsOnboarding) {
+    return (
+      <OnboardingWizard
+        onComplete={() => window.location.reload()} 
+      />
+    );
+  }
 
   const renderPage = () => {
     switch (activePage) {
