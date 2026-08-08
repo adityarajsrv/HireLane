@@ -1,24 +1,54 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FaChrome } from "react-icons/fa";
+import { LayoutDashboard, Settings, Puzzle, LogOut, ChevronDown } from "lucide-react";
 import logo from "../assets/logo.png";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
+  const menuRef = useRef(null);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-
+    const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
-
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const navigate = useNavigate();
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    const handleEsc = (e) => e.key === "Escape" && setMenuOpen(false);
+    document.addEventListener("keydown", handleEsc);
+    return () => document.removeEventListener("keydown", handleEsc);
+  }, []);
+
+  const initial = user?.name?.charAt(0).toUpperCase() || "U";
+
+  // Navigates to /dashboard and passes which internal page to land on —
+  // DashboardApp reads this from location.state since activePage is
+  // local component state, not a route param.
+  const goToPage = (page) => {
+    setMenuOpen(false);
+    navigate("/dashboard", { state: { page } });
+  };
+
+  const menuItems = [
+    { label: "Dashboard", icon: LayoutDashboard, page: "dashboard" },
+    { label: "Extension", icon: Puzzle, page: "extension" },
+    { label: "Settings", icon: Settings, page: "settings" },
+  ];
 
   return (
     <header
@@ -34,6 +64,7 @@ const Navbar = () => {
             <span className="text-[#602fe2] text-xl">Lane</span>
           </h2>
         </div>
+
         <div className="hidden md:flex items-center gap-10 text-gray-700">
           {["Home", "Features", "Pricing", "Contact"].map((item) => (
             <a
@@ -46,32 +77,71 @@ const Navbar = () => {
             </a>
           ))}
         </div>
+
         <div className="hidden md:flex items-center gap-4">
           {isAuthenticated ? (
-            <>
+            <div className="relative" ref={menuRef}>
               <button
-                onClick={() => navigate("/dashboard")}
-                className="flex items-center gap-3 rounded-full border border-gray-200 bg-white px-4 py-2 transition-all hover:border-[#602fe2] hover:shadow-md"
+                onClick={() => setMenuOpen((prev) => !prev)}
+                className={`flex cursor-pointer items-center gap-2 rounded-full border px-1.5 py-1.5 pr-2.5 transition-all duration-200 ${
+                  menuOpen
+                    ? "border-[#602fe2] bg-white shadow-md"
+                    : "border-gray-200 bg-white hover:border-[#602fe2]/50 hover:shadow-sm"
+                }`}
               >
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#602fe2] text-sm font-semibold text-white">
-                  {user?.name?.charAt(0).toUpperCase()}
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-[#602fe2] to-[#1bd29c] text-xs font-semibold text-white">
+                  {initial}
                 </div>
+                <ChevronDown
+                  size={13}
+                  className={`text-gray-400 transition-transform duration-200 ${
+                    menuOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
 
-                <div className="text-left leading-tight">
-                  <p className="text-sm font-semibold text-gray-900">
+              {/* Dropdown — compact */}
+              <div
+                className={`absolute right-0 mt-2 w-44 origin-top-right rounded-xl border border-gray-100 bg-white shadow-lg transition-all duration-150 ${
+                  menuOpen
+                    ? "opacity-100 scale-100 pointer-events-auto"
+                    : "opacity-0 scale-95 pointer-events-none"
+                }`}
+              >
+                <div className="px-3 py-2 border-b border-gray-100">
+                  <p className="truncate text-xs font-semibold text-gray-900">
                     {user?.name}
                   </p>
-                  <p className="text-xs text-gray-500">Dashboard</p>
+                  <p className="truncate text-[11px] text-gray-400">{user?.email}</p>
                 </div>
-              </button>
 
-              <button
-                onClick={logout}
-                className="cursor-pointer rounded-full border border-red-200 px-4 py-2 text-sm font-medium text-red-500 transition hover:bg-red-50"
-              >
-                Logout
-              </button>
-            </>
+                <div className="py-1">
+                  {menuItems.map(({ label, icon: Icon, page }) => (
+                    <button
+                      key={label}
+                      onClick={() => goToPage(page)}
+                      className="flex w-full cursor-pointer items-center gap-2.5 px-3 py-1.5 text-[13px] text-gray-700 transition-colors hover:bg-gray-50 hover:text-[#602fe2]"
+                    >
+                      <Icon size={14} className="text-gray-400" />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="border-t border-gray-100 py-1">
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      logout();
+                    }}
+                    className="flex w-full cursor-pointer items-center gap-2.5 px-3 py-1.5 text-[13px] text-red-500 transition-colors hover:bg-red-50"
+                  >
+                    <LogOut size={14} />
+                    Logout
+                  </button>
+                </div>
+              </div>
+            </div>
           ) : (
             <>
               <button

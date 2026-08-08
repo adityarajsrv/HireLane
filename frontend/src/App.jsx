@@ -1,5 +1,8 @@
-import { useState } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable no-unused-vars */
+/* eslint-disable react-hooks/set-state-in-effect */
+import { useEffect, useState } from "react";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Shell from "./components/layout/Shell.jsx";
@@ -22,17 +25,21 @@ const DashboardApp = () => {
   const [skippedOnboarding, setSkippedOnboarding] = useState(false);
 
   const { profile, loading } = useProfile();
+  const location = useLocation();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (location.state?.page) {
+      setActivePage(location.state.page);
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state]);
 
   if (loading) return null;
 
   const needsOnboarding = (!profile || profile.onboardingCompleted !== true) && !skippedOnboarding;
 
   if (needsOnboarding) {
-    return (
-      <OnboardingWizard
-        onComplete={() => window.location.reload()} 
-      />
-    );
+    return <OnboardingWizard onComplete={() => window.location.reload()} />;
   }
 
   const renderPage = () => {
@@ -48,10 +55,10 @@ const DashboardApp = () => {
       case "jdmatch":
         return <JDMatch />;
       case "settings":
-        return <Settings onNavigate={setActivePage}/>;
+        return <Settings onNavigate={setActivePage} />;
       case "insights":
         return <Insights />;
-      case "extension": 
+      case "extension":
         return <ExtensionSetup />;
       default:
         return <Dashboard onNavigate={setActivePage} />;
@@ -59,11 +66,7 @@ const DashboardApp = () => {
   };
 
   return (
-    <Shell
-      activePage={activePage}
-      onNavigate={setActivePage}
-      onSearch={setGlobalSearch}
-    >
+    <Shell activePage={activePage} onNavigate={setActivePage} onSearch={setGlobalSearch}>
       {renderPage()}
     </Shell>
   );

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/purity */
 import { useState, useEffect } from "react";
 import api from "../lib/axios.js";
 

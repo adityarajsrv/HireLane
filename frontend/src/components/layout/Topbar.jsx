@@ -1,10 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import { Search } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
 import logo from "../../assets/logo.png";
 
 const Topbar = ({ onSearch, onNavigate }) => {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [searchValue, setSearchValue] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -40,7 +42,11 @@ const Topbar = ({ onSearch, onNavigate }) => {
       className="flex items-center px-4 bg-white border-b border-[#f0f0f4] shrink-0 gap-4"
       style={{ height: 40 }}
     >
-      <div className="flex items-center gap-2 shrink-0" style={{ width: 187 }}>
+      <div
+        onClick={() => navigate("/")}
+        className="flex items-center gap-2 shrink-0 cursor-pointer transition-opacity duration-150 hover:opacity-80"
+        style={{ width: 187 }}
+      >
         <img src={logo} alt="" className="w-8 h-8" />
         <span
           style={{
