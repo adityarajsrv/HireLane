@@ -89,7 +89,7 @@ const Navbar = () => {
                     : "border-gray-200 bg-white hover:border-[#602fe2]/50 hover:shadow-sm"
                 }`}
               >
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-[#602fe2] to-[#1bd29c] text-xs font-semibold text-white">
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-linear-to-br from-[#602fe2] to-[#1bd29c] text-xs font-semibold text-white">
                   {initial}
                 </div>
                 <ChevronDown

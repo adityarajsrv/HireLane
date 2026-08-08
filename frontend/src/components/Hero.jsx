@@ -1,6 +1,7 @@
 import { FaChrome } from "react-icons/fa";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
+import logo from "../assets/logo.png";
 
 const ALL_FIELDS = [
   { label: "Full name", value: "Aarav Sharma", col: "half" },
@@ -253,10 +254,10 @@ export default function Hero() {
                       >
                         {fieldFilled(i)
                           ? field.value || (
-                              <span className="inline-flex gap-1">
-                                <span className="h-2 w-14 rounded-full bg-gray-200 inline-block" />
-                              </span>
-                            )
+                            <span className="inline-flex gap-1">
+                              <span className="h-2 w-14 rounded-full bg-gray-200 inline-block" />
+                            </span>
+                          )
                           : "-"}
                       </span>
                       {fieldFilled(i) && field.value && (
@@ -309,12 +310,11 @@ export default function Hero() {
             </div>
           </div>
 
-          {/* Floating — HireLane progress card */}
           <div className="absolute -right-6 top-10 w-65 rounded-2xl border border-gray-100 bg-white p-4 shadow-[0_16px_48px_rgba(0,0,0,0.11)]">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#5b3df5] text-white text-sm font-bold shadow-[0_3px_10px_rgba(91,61,245,0.4)]">
-                  HL
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full overflow-hidden shadow-[0_3px_10px_rgba(91,61,245,0.4)]">
+                  <img src={logo} alt="HireLane" className="h-full w-full object-cover" />
                 </div>
                 <p className="text-[16px] font-bold text-gray-900 leading-tight">
                   HireLane
