@@ -34,3 +34,12 @@ const logApplication = async (appData) => {
     console.error("[HireLane] Failed to log application:", err);
   }
 };
+
+chrome.runtime.onStartup.addListener(async () => {
+  const all = await chrome.storage.local.get(null);
+  const jdKeys = Object.keys(all).filter((k) => k.startsWith("jd_") || k.startsWith("pageinfo_"));
+  if (jdKeys.length > 100) {
+    const toRemove = jdKeys.slice(0, jdKeys.length - 50);
+    chrome.storage.local.remove(toRemove);
+  }
+});

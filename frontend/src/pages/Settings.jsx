@@ -1,31 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 import api from "../lib/axios.js";
-import { useEffect } from "react";
 
-const Settings = () => {
+const Settings = ({ onNavigate }) => {
   const { user, logout } = useAuth();
   const [loggingOutAll, setLoggingOutAll] = useState(false);
   const [msg, setMsg] = useState({ text: "", ok: true });
-  const [extensionEnabled, setExtensionEnabled] = useState(true);
-  const [toggling, setToggling] = useState(false);
 
-  useEffect(() => {
-    api.get("/api/profile").then((res) => {
-      if (res.data.profile) setExtensionEnabled(res.data.profile.extensionEnabled !== false);
-    });
-  }, []);
-
-  const handleToggleExtension = async () => {
-    setToggling(true);
-    const newValue = !extensionEnabled;
-    try {
-      await api.put("/api/profile", { extensionEnabled: newValue });
-      setExtensionEnabled(newValue);
-    } finally {
-      setToggling(false);
-    }
-  };
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const showMsg = (text, ok = true) => {
     setMsg({ text, ok });
@@ -45,6 +28,23 @@ const Settings = () => {
     }
   };
 
+  const handleUpgrade = () => {
+    showMsg("Pro plan billing isn't live yet — check back soon.", true);
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    try {
+      await api.delete("/auth/account");
+      logout();
+    } catch (err) {
+      showMsg(err.response?.data?.message || "Failed to delete account.", false);
+      setConfirmDelete(false);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const sectionStyle = { background: "white", border: "1px solid #f0f0f4", borderRadius: 16, padding: 20, marginBottom: 16 };
   const labelStyle = { fontSize: 9, fontFamily: "JetBrains Mono, monospace", color: "#9ca3af", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 4, display: "block" };
 
@@ -60,6 +60,7 @@ const Settings = () => {
       </div>
 
       <div style={{ maxWidth: 560 }}>
+
         <div style={sectionStyle}>
           <div style={{ fontSize: 14, fontFamily: "DM Sans, sans-serif", fontWeight: 500, color: "#0a0a0f", marginBottom: 16 }}>
             Account
@@ -92,6 +93,7 @@ const Settings = () => {
             Free plan: 20 tracked applications, 5 AI calls/day, 15 fills/month.
           </p>
           <button
+            onClick={handleUpgrade}
             style={{ height: 36, padding: "0 20px", background: "#5b3df5", color: "white", border: "none", borderRadius: 10, fontSize: 12, fontFamily: "Syne, sans-serif", fontWeight: 500, cursor: "pointer" }}
           >
             Upgrade to Pro
@@ -123,34 +125,22 @@ const Settings = () => {
             {loggingOutAll ? "Logging out..." : "Logout of all devices"}
           </button>
         </div>
+
         <div style={sectionStyle}>
           <div style={{ fontSize: 14, fontFamily: "DM Sans, sans-serif", fontWeight: 500, color: "#0a0a0f", marginBottom: 4 }}>
-            Extension Access
+            Browser Extension
           </div>
           <p style={{ fontSize: 12, fontFamily: "DM Sans, sans-serif", color: "#6b7280", marginBottom: 16 }}>
-            Turn off the HireLane extension without uninstalling it — useful if you want to pause autofill temporarily.
+            Download, install, and manage your HireLane extension connection.
           </p>
-          <div className="flex items-center justify-between">
-            <span style={{ fontSize: 12, fontFamily: "DM Sans, sans-serif", color: "#374151" }}>
-              Extension is currently {extensionEnabled ? "enabled" : "disabled"}
-            </span>
-            <button
-              onClick={handleToggleExtension}
-              disabled={toggling}
-              style={{
-                width: 36, height: 20, borderRadius: 10, border: "none",
-                cursor: toggling ? "not-allowed" : "pointer",
-                background: extensionEnabled ? "#5b3df5" : "#e0e0ea",
-                position: "relative", transition: "background 200ms", flexShrink: 0,
-              }}
-            >
-              <span style={{
-                position: "absolute", top: 2, left: extensionEnabled ? 18 : 2,
-                width: 16, height: 16, borderRadius: "50%", background: "white", transition: "left 200ms",
-              }} />
-            </button>
-          </div>
+          <button
+            onClick={() => onNavigate("extension")}
+            style={{ height: 36, padding: "0 20px", background: "#5b3df5", color: "white", border: "none", borderRadius: 10, fontSize: 12, fontFamily: "Syne, sans-serif", fontWeight: 500, cursor: "pointer" }}
+          >
+            Manage Extension
+          </button>
         </div>
+
         <div style={{ ...sectionStyle, border: "1px solid #fcebeb" }}>
           <div style={{ fontSize: 14, fontFamily: "DM Sans, sans-serif", fontWeight: 500, color: "#e24b4a", marginBottom: 4 }}>
             Danger Zone
@@ -158,11 +148,46 @@ const Settings = () => {
           <p style={{ fontSize: 12, fontFamily: "DM Sans, sans-serif", color: "#6b7280", marginBottom: 16 }}>
             Deleting your account is permanent and removes all applications, profile data, and resume history.
           </p>
-          <button
-            style={{ height: 36, padding: "0 20px", background: "white", color: "#e24b4a", border: "1px solid #e24b4a", borderRadius: 10, fontSize: 12, fontFamily: "DM Sans, sans-serif", fontWeight: 500, cursor: "pointer" }}
-          >
-            Delete Account
-          </button>
+
+          {!confirmDelete ? (
+            <button
+              onClick={() => setConfirmDelete(true)}
+              style={{
+                height: 36, padding: "0 20px", background: "white", color: "#e24b4a",
+                border: "1px solid #e24b4a", borderRadius: 10,
+                fontSize: 12, fontFamily: "DM Sans, sans-serif", fontWeight: 500, cursor: "pointer",
+              }}
+            >
+              Delete Account
+            </button>
+          ) : (
+            <div className="flex gap-2">
+              <button
+                onClick={() => setConfirmDelete(false)}
+                disabled={deleting}
+                style={{
+                  height: 36, padding: "0 20px", background: "white", color: "#6b7280",
+                  border: "1px solid #e0e0ea", borderRadius: 10,
+                  fontSize: 12, fontFamily: "DM Sans, sans-serif", fontWeight: 500,
+                  cursor: deleting ? "not-allowed" : "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleting}
+                style={{
+                  height: 36, padding: "0 20px", background: "#e24b4a", color: "white",
+                  border: "1px solid #e24b4a", borderRadius: 10,
+                  fontSize: 12, fontFamily: "DM Sans, sans-serif", fontWeight: 500,
+                  cursor: deleting ? "not-allowed" : "pointer",
+                }}
+              >
+                {deleting ? "Deleting..." : "Yes, delete permanently"}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

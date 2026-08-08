@@ -56,6 +56,17 @@ const profileSchema = new mongoose.Schema({
     disabilityStatus: { type: String, default: "" },
     extensionEnabled: { type: Boolean, default: true },
     onboardingCompleted: { type: Boolean, default: false },
+    eligibleToWork: { type: Boolean, default: null },
+    sponsorshipRequired: { type: Boolean, default: null },
+    dateOfBirth: { type: String, default: "" },
+    currentSalary: { type: Number, default: null },
+    earliestStartDate: { type: String, default: "" },
+    willingToRelocate: { type: Boolean, default: null },
+    willingToTravel: { type: Boolean, default: null },
+    backgroundCheckConsent: { type: Boolean, default: true },
+    drugTestConsent: { type: Boolean, default: true },
+    certifications: [{ type: String }],
+    extensionLastConnectedAt: { type: Date, default: null },
 }, {
     timestamps: true,
 })

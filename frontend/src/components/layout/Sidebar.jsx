@@ -6,6 +6,7 @@ import {
   Lightbulb,
   User,
   Settings,
+  Puzzle,
 } from "lucide-react";
 
 const NAV_GROUPS = [
@@ -29,8 +30,9 @@ const NAV_GROUPS = [
     items: [
       { id: "profile", label: "Profile" },
       { id: "settings", label: "Settings" },
+      { id: "extension", label: "Extension" },
     ],
-  },
+  }
 ];
 
 const Icon = ({ id }) => {
@@ -43,6 +45,7 @@ const Icon = ({ id }) => {
     insights: <Lightbulb {...props} />,
     profile: <User {...props} />,
     settings: <Settings {...props} />,
+    extension: <Puzzle {...props} />,
   };
   return icons[id] || null;
 };
@@ -129,29 +132,6 @@ const Sidebar = ({ activePage, onNavigate }) => {
           </div>
         ))}
       </nav>
-
-      <div className="border-t border-[#f0f0f4] p-3">
-        <div
-          className="flex items-center gap-1.5 px-1 py-1.5 rounded-lg"
-          style={{ background: "#f5f4ff", border: "1px dashed #e0d9ff" }}
-        >
-          <span
-            className="rounded-full"
-            style={{
-              width: 6,
-              height: 6,
-              background: "#e0e0ea",
-              flexShrink: 0,
-            }}
-          />
-          <span
-            className="text-[#9ca3af]"
-            style={{ fontSize: 10, fontFamily: "JetBrains Mono, monospace" }}
-          >
-            Extension coming soon
-          </span>
-        </div>
-      </div>
     </aside>
   );
 };

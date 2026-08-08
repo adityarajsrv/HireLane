@@ -13,7 +13,7 @@ Return ONLY a valid JSON object with exactly these fields, no markdown, no expla
 {
   "firstName": "", "lastName": "", "phone": "", "location": "",
   "linkedin": "", "github": "", "portfolio": "",
-  "skills": [], "cvBullets": [], "targetRoles": [],
+  "skills": [], "cvBullets": [], "targetRoles": [], certifications: [],
   "workExperience": [
     { "company": "", "title": "", "startDate": "", "endDate": "", "description": "" }
   ],

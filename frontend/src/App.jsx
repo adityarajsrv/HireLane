@@ -14,6 +14,7 @@ import Settings from "./pages/Settings.jsx";
 import Insights from "./pages/Insights.jsx";
 import useProfile from "./hooks/useProfile.js";
 import OnboardingWizard from "./pages/OnboardingWizard.jsx";
+import ExtensionSetup from "./pages/ExtensionSetup.jsx";
 
 const DashboardApp = () => {
   const [activePage, setActivePage] = useState("dashboard");
@@ -47,9 +48,11 @@ const DashboardApp = () => {
       case "jdmatch":
         return <JDMatch />;
       case "settings":
-        return <Settings />;
+        return <Settings onNavigate={setActivePage}/>;
       case "insights":
         return <Insights />;
+      case "extension": 
+        return <ExtensionSetup />;
       default:
         return <Dashboard onNavigate={setActivePage} />;
     }

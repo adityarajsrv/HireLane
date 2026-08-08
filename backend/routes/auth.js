@@ -4,6 +4,9 @@ import Session from "../models/Session.js";
 import { createAccessToken, createRefreshToken, hashRefreshToken } from "../utils/signature.js";
 import { protect } from "../middlewares/authMiddleware.js";
 import config from "../config/config.js";
+import Profile from "../models/Profile.js";
+import Application from "../models/Application.js";
+import JDMatchResult from "../models/JDMatchResult.js";
 
 const router = express.Router();
 
@@ -198,10 +201,41 @@ router.post("/logout-all", protect, async (req, res) => {
     res.json({ success: true, message: "Logged out from all devices." });
 });
 
+
 router.post("/extension-token", protect, async (req, res) => {
   const token = createAccessToken(req.user);
+
+  await Profile.findOneAndUpdate(
+    { userId: req.user._id },
+    { $set: { extensionLastConnectedAt: new Date() } },
+    { upsert: true }
+  );
 
   res.json({ success: true, token, user: req.user });
 });
 
+router.delete("/account", protect, async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    await Promise.all([
+      Session.deleteMany({ userId }),
+      Profile.deleteOne({ userId }),
+      Application.deleteMany({ userId }),
+      JDMatchResult.deleteMany({ userId }),
+    ]);
+
+    await User.findByIdAndDelete(userId);
+
+    res.clearCookie("accessToken", cookieOptions);
+    res.clearCookie("refreshToken", { ...cookieOptions, path: "/auth/refresh" });
+
+    res.json({ success: true, message: "Account deleted." });
+  } catch (err) {
+    console.error("Delete account error:", err);
+    res.status(500).json({ success: false, message: "Failed to delete account." });
+  }
+});
+
 export default router;
+

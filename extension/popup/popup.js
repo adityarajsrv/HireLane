@@ -1,27 +1,30 @@
 const API_BASE = "http://localhost:5000";
 
-const connectSection   = document.getElementById("connectSection");
-const mainSection      = document.getElementById("mainSection");
-const confirmSection   = document.getElementById("confirmSection");
-const connectBtn       = document.getElementById("connectBtn");
-const disconnectBtn    = document.getElementById("disconnectBtn");
-const startFillBtn     = document.getElementById("startFillBtn");
-const atsStatus        = document.getElementById("atsStatus");
-const atsDot           = document.getElementById("atsDot");
-const fieldCountEl     = document.getElementById("fieldCount");
-const companyInput     = document.getElementById("companyInput");
-const roleInput        = document.getElementById("roleInput");
-const atsInput         = document.getElementById("atsInput");
-const ctcInput         = document.getElementById("ctcInput");
-const confirmFillBtn   = document.getElementById("confirmFillBtn");
+const connectSection = document.getElementById("connectSection");
+const mainSection = document.getElementById("mainSection");
+const confirmSection = document.getElementById("confirmSection");
+const connectBtn = document.getElementById("connectBtn");
+const disconnectBtn = document.getElementById("disconnectBtn");
+const startFillBtn = document.getElementById("startFillBtn");
+const atsStatus = document.getElementById("atsStatus");
+const atsDot = document.getElementById("atsDot");
+const fieldCountEl = document.getElementById("fieldCount");
+const companyInput = document.getElementById("companyInput");
+const roleInput = document.getElementById("roleInput");
+const atsInput = document.getElementById("atsInput");
+const ctcInput = document.getElementById("ctcInput");
+const confirmFillBtn = document.getElementById("confirmFillBtn");
 const cancelConfirmBtn = document.getElementById("cancelConfirmBtn");
+const sessionResetRow = document.getElementById("sessionResetRow");
+const resetSessionBtn = document.getElementById("resetSessionBtn");
 
-let extractedFields  = null;
+
+let extractedFields = null;
 let currentSessionData = null;
 
 const showSection = (name) => {
   connectSection.style.display = name === "connect" ? "block" : "none";
-  mainSection.style.display    = name === "main"    ? "block" : "none";
+  mainSection.style.display = name === "main" ? "block" : "none";
   confirmSection.style.display = name === "confirm" ? "block" : "none";
 };
 
@@ -71,7 +74,7 @@ const init = async () => {
 };
 
 connectBtn.addEventListener("click", async () => {
-  const email    = prompt("HireLane email:");
+  const email = prompt("HireLane email:");
   const password = prompt("HireLane password:");
   if (!email || !password) return;
 
@@ -119,7 +122,7 @@ startFillBtn.addEventListener("click", async () => {
     }
 
     let prefillCompany = extractRes.pageInfo.company;
-    let prefillRole    = extractRes.pageInfo.role;
+    let prefillRole = extractRes.pageInfo.role;
 
     if (extractRes.sessionKey) {
       try {
@@ -131,20 +134,22 @@ startFillBtn.addEventListener("click", async () => {
         const existing = checkData.applications?.[0];
         if (existing) {
           prefillCompany = existing.company;
-          prefillRole    = existing.role;
+          prefillRole = existing.role;
           fieldCountEl.textContent = "Continuing your in-progress application.";
           fieldCountEl.style.color = "#5b3df5";
+          sessionResetRow.style.display = "block"; 
         } else {
           fieldCountEl.textContent = "";
+          sessionResetRow.style.display = "none";
         }
       } catch {
       }
     }
 
     companyInput.value = prefillCompany === "Unknown Company" ? "" : prefillCompany;
-    roleInput.value    = prefillRole === "Unknown Role" ? "" : prefillRole;
-    atsInput.value      = extractRes.ats || "other";
-    ctcInput.value      = "";
+    roleInput.value = prefillRole === "Unknown Role" ? "" : prefillRole;
+    atsInput.value = extractRes.ats || "other";
+    ctcInput.value = "";
 
     showSection("confirm");
   } catch (err) {
@@ -163,8 +168,8 @@ cancelConfirmBtn.addEventListener("click", () => {
 
 confirmFillBtn.addEventListener("click", async () => {
   const company = companyInput.value.trim();
-  const role    = roleInput.value.trim();
-  const ats     = atsInput.value;
+  const role = roleInput.value.trim();
+  const ats = atsInput.value;
 
   if (!company || !role) {
     fieldCountEl.textContent = "Company and role are required.";
@@ -223,16 +228,44 @@ confirmFillBtn.addEventListener("click", async () => {
     });
 
     let matchScore = null;
+
     try {
-      const jdRes = await chrome.tabs.sendMessage(tab.id, { action: "GET_JD_TEXT" });
-      if (jdRes?.jobDescription && jdRes.jobDescription.length > 100) {
+      const jdRes = await chrome.tabs.sendMessage(tab.id, {
+        action: "GET_JD_TEXT",
+      });
+
+      let jobDescription = jdRes?.jobDescription || "";
+
+      if (
+        jobDescription.length < 200 &&
+        currentSessionData?.sessionKey
+      ) {
+        const cacheKey = `jd_${currentSessionData.sessionKey}`;
+        const cached = await chrome.storage.local.get(cacheKey);
+
+        if (cached[cacheKey]) {
+          jobDescription = cached[cacheKey];
+          console.log("[HireLane] Using cached job description");
+        }
+      }
+
+      if (jobDescription.length > 100) {
         const scoreRes = await fetch(`${API_BASE}/api/jdmatch/score`, {
           method: "POST",
-          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${hirelaneToken}` },
-          body: JSON.stringify({ jobDescription: jdRes.jobDescription }),
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${hirelaneToken}`,
+          },
+          body: JSON.stringify({
+            jobDescription,
+          }),
         });
+
         const scoreData = await scoreRes.json();
-        if (scoreData.success) matchScore = scoreData.score;
+
+        if (scoreData.success) {
+          matchScore = scoreData.score;
+        }
       }
     } catch {
     }
@@ -259,6 +292,13 @@ confirmFillBtn.addEventListener("click", async () => {
     confirmFillBtn.disabled = false;
     confirmFillBtn.textContent = "Continue & Fill";
   }
+});
+
+resetSessionBtn.addEventListener("click", () => {
+  if (currentSessionData) currentSessionData.sessionKey = null;
+  fieldCountEl.textContent = "Treating this as a new application.";
+  fieldCountEl.style.color = "#5b3df5";
+  sessionResetRow.style.display = "none";
 });
 
 init();

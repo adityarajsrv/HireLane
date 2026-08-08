@@ -47,53 +47,80 @@ router.get("/", async (req, res) => {
     }
 });
 
+const EDITABLE_FIELDS = [
+    "firstName",
+    "lastName",
+    "phone",
+    "location",
+    "linkedin",
+    "github",
+    "portfolio",
+    "workAuth",
+    "expectedSalary",
+    "noticePeriod",
+    "targetRoles",
+    "workExperience",
+    "education",
+    "gender",
+    "ethnicity",
+    "veteranStatus",
+    "disabilityStatus",
+    "extensionEnabled",
+    "onboardingCompleted",
+    "dateOfBirth",
+    "currentSalary",
+    "sponsorshipRequired",
+    "eligibleToWork",
+    "backgroundCheckConsent",
+    "drugTestConsent",
+    "willingToRelocate",
+    "willingToTravel",
+    "earliestStartDate",
+    "certifications",
+];
+
 router.put("/", async (req, res) => {
     try {
-        const {
-            firstName, lastName, phone, location,
-            linkedin, github, portfolio,
-            workAuth, expectedSalary, noticePeriod,
-            targetRoles, workExperience, education,
-            gender, ethnicity, veteranStatus, disabilityStatus,
-            extensionEnabled, onboardingCompleted,
-        } = req.body;
+        const updateData = {};
 
-        const updateData = {
-            firstName: firstName ?? "",
-            lastName: lastName ?? "",
-            phone: phone ?? "",
-            location: location ?? "",
-            linkedin: linkedin ?? "",
-            github: github ?? "",
-            portfolio: portfolio ?? "",
-            workAuth: workAuth ?? "",
-            expectedSalary: expectedSalary ?? 0,
-            noticePeriod: noticePeriod ?? "",
-            targetRoles: targetRoles ?? [],
-            workExperience: workExperience ?? [],
-            education: education ?? [],
-            gender: gender ?? "",
-            ethnicity: ethnicity ?? "",
-            veteranStatus: veteranStatus ?? "",
-            disabilityStatus: disabilityStatus ?? "",
-        };
+        for (const field of EDITABLE_FIELDS) {
+            if (req.body[field] !== undefined) {
+                updateData[field] = req.body[field];
+            }
+        }
 
-        if (extensionEnabled !== undefined) updateData.extensionEnabled = extensionEnabled;
-        if (onboardingCompleted !== undefined) updateData.onboardingCompleted = onboardingCompleted;
+        if (Object.keys(updateData).length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: "No fields to update.",
+            });
+        }
 
         const profile = await Profile.findOneAndUpdate(
             { userId: req.user._id },
             { $set: updateData },
-            { returnDocument: "after", upsert: true, runValidators: true }
+            {
+                returnDocument: "after",
+                upsert: true,
+                runValidators: true,
+            }
         );
+
         res.json({ success: true, profile });
     } catch (err) {
         if (err.name === "ValidationError") {
             const messages = Object.values(err.errors).map((e) => e.message);
-            return res.status(400).json({ success: false, message: messages.join(". ") });
+            return res.status(400).json({
+                success: false,
+                message: messages.join(". "),
+            });
         }
+
         console.error("Update profile error:", err);
-        res.status(500).json({ success: false, message: "Failed to update profile." });
+        res.status(500).json({
+            success: false,
+            message: "Failed to update profile.",
+        });
     }
 });
 

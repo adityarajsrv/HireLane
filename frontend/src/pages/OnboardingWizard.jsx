@@ -3,10 +3,10 @@ import useProfile from "../hooks/useProfile.js";
 
 const NOTICE_OPTIONS = ["Immediate", "15d", "30d", "60d", "90d"];
 const WORK_AUTH_OPTIONS = [
-  { value: "citizen",             label: "Citizen" },
-  { value: "permanent_resident",  label: "Permanent Resident" },
-  { value: "visa",                label: "Visa / Work Permit" },
-  { value: "other",               label: "Other" },
+  { value: "citizen", label: "Citizen" },
+  { value: "permanent_resident", label: "Permanent Resident" },
+  { value: "visa", label: "Visa / Work Permit" },
+  { value: "other", label: "Other" },
 ];
 
 const EEO_DEFAULT = "prefer_not_to_say";
@@ -51,6 +51,10 @@ const OnboardingWizard = ({ onComplete }) => {
         noticePeriod: NOTICE_TO_API[form.noticePeriod],
         expectedSalary: form.expectedSalary * 100000,
         targetRoles: form.targetRoles,
+        eligibleToWork: form.eligibleToWork ?? true,
+        sponsorshipRequired: form.sponsorshipRequired ?? false,
+        willingToRelocate: form.willingToRelocate ?? false,
+        willingToTravel: form.willingToTravel ?? false,
         gender: skippedEEO ? "" : form.gender,
         ethnicity: skippedEEO ? "" : form.ethnicity,
         veteranStatus: skippedEEO ? "" : form.veteranStatus,
@@ -164,6 +168,52 @@ const OnboardingWizard = ({ onComplete }) => {
         )}
 
         {step === 3 && (
+          <>
+            <h2 style={{ fontFamily: "Syne, sans-serif", fontSize: 20, fontWeight: 500, marginBottom: 4 }}>
+              Eligibility &amp; availability
+            </h2>
+            <p style={{ fontSize: 12, color: "#9ca3af", fontFamily: "DM Sans, sans-serif", marginBottom: 20 }}>
+              Nearly every Workday application asks these directly — set them once here.
+            </p>
+
+            {[
+              { key: "eligibleToWork", label: "Are you legally eligible to work in your target country?" },
+              { key: "sponsorshipRequired", label: "Will you require visa sponsorship?" },
+              { key: "willingToRelocate", label: "Are you willing to relocate?" },
+              { key: "willingToTravel", label: "Are you willing to travel for this role?" },
+            ].map(({ key, label }) => (
+              <div key={key} className="mb-3">
+                <label style={labelStyle}>{label}</label>
+                <div className="flex gap-2">
+                  {[["Yes", true], ["No", false]].map(([txt, val]) => (
+                    <button key={txt} onClick={() => setForm((p) => ({ ...p, [key]: val }))}
+                      style={{
+                        flex: 1, height: 32, borderRadius: 8, fontSize: 12, fontFamily: "DM Sans, sans-serif",
+                        border: form[key] === val ? "1px solid #5b3df5" : "1px solid #e0e0ea",
+                        background: form[key] === val ? "#ede8ff" : "white",
+                        color: form[key] === val ? "#5b3df5" : "#6b7280", cursor: "pointer",
+                      }}>
+                      {txt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+
+            <div className="flex gap-2 mt-4">
+              <button onClick={() => setStep(2)} className="flex-1 rounded-xl"
+                style={{ height: 40, background: "white", border: "1px solid #e0e0ea", fontSize: 13, fontFamily: "DM Sans, sans-serif", color: "#6b7280", cursor: "pointer" }}>
+                Back
+              </button>
+              <button onClick={() => setStep(4)} className="flex-1 rounded-xl text-white"
+                style={{ height: 40, background: "#5b3df5", border: "none", fontSize: 13, fontFamily: "Syne, sans-serif", fontWeight: 500, cursor: "pointer" }}>
+                Continue
+              </button>
+            </div>
+          </>
+        )}
+
+        {step === 4 && (
           <>
             <h2 style={{ fontFamily: "Syne, sans-serif", fontSize: 20, fontWeight: 500, marginBottom: 4 }}>
               Voluntary disclosures

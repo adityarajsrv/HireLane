@@ -60,23 +60,78 @@ const resolveProfileValue = (profile, key) => {
   return value;
 };
 
+const matchRadioOption = (options, value) => {
+  const valStr = String(value).toLowerCase();
+  const isTruthy = valStr === "true" || valStr === "yes";
+  const isFalsy = valStr === "false" || valStr === "no";
+
+  return options.find((opt) => {
+    const optText = opt.optionText.toLowerCase();
+
+    if (isTruthy) {
+      return optText.includes("yes") || optText === "true";
+    }
+
+    if (isFalsy) {
+      return optText.includes("no") || optText === "false";
+    }
+
+    return (
+      optText.includes(valStr) ||
+      valStr.includes(optText)
+    );
+  });
+};
+
 const fillAllFields = async (mergedFields, profile) => {
   let filledCount = 0;
 
   for (const field of mergedFields) {
     if (!field.profileKey || field.profileKey === "unknown") continue;
 
+    if (field.type === "radio") {
+      const value = resolveProfileValue(profile, field.profileKey);
+
+      if (value === undefined || value === null || value === "") {
+        continue;
+      }
+
+      const match = matchRadioOption(field.options, value);
+
+      if (match) {
+        const radio = document.querySelector(match.selector);
+
+        if (radio) {
+          radio.click();
+          radio.dispatchEvent(
+            new Event("change", { bubbles: true })
+          );
+          filledCount++;
+        }
+      }
+
+      await new Promise((r) => setTimeout(r, 120));
+      continue;
+    }
+
     const element = document.querySelector(field.selector);
+
     if (!element) continue;
 
     const value = resolveProfileValue(profile, field.profileKey);
-    if (value === undefined || value === null || value === "") continue;
+
+    if (value === undefined || value === null || value === "") {
+      continue;
+    }
 
     const kind = getFieldKind(element);
 
     if (kind === "dropdown") {
       const success = await fillDropdown(element, value);
-      if (success) filledCount++;
+
+      if (success) {
+        filledCount++;
+      }
     } else if (kind === "unknown") {
       continue;
     } else {
@@ -84,7 +139,9 @@ const fillAllFields = async (mergedFields, profile) => {
       filledCount++;
     }
 
-    await new Promise((r) => setTimeout(r, 120 + Math.random() * 120));
+    await new Promise((r) =>
+      setTimeout(r, 120 + Math.random() * 120)
+    );
   }
 
   return filledCount;
@@ -100,16 +157,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 document.addEventListener("submit", async (e) => {
-  const { currentATS, currentURL } = await chrome.storage.local.get(["currentATS", "currentURL"]);
-  const pageInfo = scrapePageInfo();
+  const ats = detectATS();
+  if (!ats) return; 
+
+  const sessionKey = extractSessionKey();
+  const pageInfo    = scrapePageInfo();
 
   chrome.runtime.sendMessage({
     action: "LOG_APPLICATION",
     data: {
       company: pageInfo.company,
       role: pageInfo.role,
-      ats: currentATS || "other",
-      url: currentURL,
+      ats,
+      url: window.location.href,
+      sessionKey,
     },
   });
 }, true);

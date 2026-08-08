@@ -17,23 +17,23 @@ const findLabelForField = (el) => {
   return null;
 };
 
-const buildSelector = (el, index) => {
+const buildSelector = (el, indexOrSuffix) => {
   const automationId = el.getAttribute("data-automation-id");
   if (automationId) return `[data-automation-id="${CSS.escape(automationId)}"]`;
   if (el.id) return `#${CSS.escape(el.id)}`;
-  if (el.name) return `[name="${CSS.escape(el.name)}"]`;
-  el.setAttribute("data-hirelane-idx", index);
-  return `[data-hirelane-idx="${index}"]`;
+  if (el.name && el.type !== "radio") return `[name="${CSS.escape(el.name)}"]`;
+  el.setAttribute("data-hirelane-idx", indexOrSuffix);
+  return `[data-hirelane-idx="${indexOrSuffix}"]`;
 };
 
 const extractFields = () => {
-  const inputs = document.querySelectorAll("input, textarea, select");
+  const inputs = document.querySelectorAll("input:not([type='radio']), textarea, select");
   const fields = [];
   let idx = 0;
 
   inputs.forEach((el) => {
     if (el.type === "hidden" || el.disabled || el.readOnly) return;
-    if (["submit", "button", "checkbox", "radio", "file"].includes(el.type)) return;
+    if (["submit", "button", "checkbox", "file"].includes(el.type)) return;
 
     const label = findLabelForField(el);
     if (!label) return;
@@ -46,7 +46,57 @@ const extractFields = () => {
     idx++;
   });
 
-  return fields;
+  const radioFields = extractRadioGroups();
+  return [...fields, ...radioFields];
+};
+
+const extractRadioGroups = () => {
+  const radios = document.querySelectorAll('input[type="radio"]');
+  const groups = {};
+
+  radios.forEach((radio) => {
+    if (!radio.name) return;
+
+    if (!groups[radio.name]) {
+      const fieldset = radio.closest("fieldset, div[role='radiogroup'], div[data-automation-id]");
+      let groupLabel = fieldset?.querySelector("legend")?.textContent?.trim();
+
+      if (!groupLabel) {
+        const automationId = fieldset?.getAttribute("data-automation-id");
+        if (automationId) {
+          groupLabel = automationId.split(/[_\-]/).pop()
+            .replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase();
+        }
+      }
+      if (!groupLabel) {
+        groupLabel = fieldset?.previousElementSibling?.textContent?.trim();
+      }
+
+      groups[radio.name] = { label: groupLabel || radio.name, options: [] };
+    }
+
+    let optionText = "";
+    if (radio.id) {
+      const lbl = document.querySelector(`label[for="${radio.id}"]`);
+      optionText = lbl?.textContent?.trim() || "";
+    }
+    if (!optionText) {
+      optionText = radio.parentElement?.textContent?.trim() || radio.value || "";
+    }
+
+    groups[radio.name].options.push({
+      value: radio.value,
+      optionText,
+      selector: buildSelector(radio, `radio-${radio.name}-${radio.value}`),
+    });
+  });
+
+  return Object.entries(groups).map(([name, g]) => ({
+    label: g.label,
+    type: "radio",
+    groupName: name,
+    options: g.options,
+  }));
 };
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
