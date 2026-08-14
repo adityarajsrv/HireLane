@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import api from "../lib/axios.js";
 
 const JDMatch = () => {
@@ -6,6 +6,24 @@ const JDMatch = () => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+
+  const handleCopyCover = () => {
+    navigator.clipboard.writeText(result.recommendation);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  useEffect(() => {
+    if (result?.recommendation) {
+      api
+        .post("/api/jdmatch/track-cover-view", {
+          recommendation: result.recommendation,
+        })
+        .catch(() => { });
+    }
+  }, [result?.recommendation]);
 
   const handleAnalyse = async () => {
     if (!jd.trim()) return;
@@ -92,7 +110,7 @@ const JDMatch = () => {
           .map((s) => s.charAt(0).toUpperCase() + s.slice(1)),
         partial: partial.slice(0, 3),
         recommendation: coverLetter
-          ? `Based on your profile: ${coverLetter.slice(0, 180)}...`
+          ? coverLetter
           : `Your ${matched[0] || "backend"} experience is your strongest match. Focus on highlighting distributed systems work.`,
       });
 
@@ -468,30 +486,84 @@ const JDMatch = () => {
                   animation: "fadeIn 300ms ease 150ms both",
                 }}
               >
-                <div className="flex items-center gap-2 mb-2">
-                  <span style={{ color: "#5b3df5", fontSize: 12 }}>⚡</span>
-                  <span
-                    style={{
-                      fontSize: 9,
-                      fontFamily: "JetBrains Mono, monospace",
-                      color: "#5b3df5",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.06em",
-                    }}
-                  >
-                    AI Recommendation
-                  </span>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    <span style={{ color: "#5b3df5", fontSize: 12 }}>
+                      ⚡
+                    </span>
+
+                    <span
+                      style={{
+                        fontSize: 9,
+                        fontFamily: "JetBrains Mono, monospace",
+                        color: "#5b3df5",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                      }}
+                    >
+                      AI Cover Letter Draft
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setExpanded((v) => !v)}
+                      style={{
+                        fontSize: 10,
+                        fontFamily: "DM Sans, sans-serif",
+                        color: "#5b3df5",
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {expanded ? "Collapse" : "Expand"}
+                    </button>
+
+                    <button
+                      onClick={handleCopyCover}
+                      style={{
+                        fontSize: 10,
+                        fontFamily: "DM Sans, sans-serif",
+                        color: copied ? "#1bd29c" : "#5b3df5",
+                        background: "white",
+                        border: "1px solid #ede8ff",
+                        borderRadius: 6,
+                        padding: "3px 8px",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {copied ? "Copied ✓" : "Copy"}
+                    </button>
+                  </div>
                 </div>
+
                 <p
                   style={{
                     fontSize: 11,
                     fontFamily: "DM Sans, sans-serif",
                     color: "#374151",
                     lineHeight: 1.6,
+                    maxHeight: expanded ? "none" : 96,
+                    overflow: "hidden",
+                    position: "relative",
+                    whiteSpace: "pre-wrap",
                   }}
                 >
                   {result.recommendation}
                 </p>
+
+                {!expanded && result.recommendation.length > 200 && (
+                  <div
+                    style={{
+                      position: "relative",
+                      marginTop: -20,
+                      height: 20,
+                      background:
+                        "linear-gradient(to bottom, transparent, #f5f4ff)",
+                    }}
+                  />
+                )}
               </div>
             </div>
           )}

@@ -13,6 +13,7 @@ const jdMatchResultSchema = new mongoose.Schema(
     score:    { type: Number, required: true },
     matched:  [{ type: String }],
     missing:  [{ type: String }],
+    coverLetterGenerated: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

@@ -46,6 +46,14 @@ const Insights = () => {
           <div style={{ fontSize: 10, fontFamily: "JetBrains Mono, monospace", color: "#9ca3af", textTransform: "uppercase" }}>JDs Analyzed</div>
           <div style={{ fontSize: 28, fontFamily: "Syne, sans-serif", fontWeight: 500, color: "#0a0a0f" }}>{data.totalAnalyzed}</div>
         </div>
+        <div className="bg-white rounded-2xl p-4" style={{ border: "1px solid #f0f0f4" }}>
+          <div style={{ fontSize: 10, fontFamily: "JetBrains Mono, monospace", color: "#9ca3af", textTransform: "uppercase" }}>
+            Cover Letters Drafted
+          </div>
+          <div style={{ fontSize: 28, fontFamily: "Syne, sans-serif", fontWeight: 500, color: "#5b3df5" }}>
+            {data.coverLettersGenerated ?? 0}
+          </div>
+        </div>
       </div>
 
       <div className="bg-white rounded-2xl p-4 mb-4" style={{ border: "1px solid #f0f0f4" }}>

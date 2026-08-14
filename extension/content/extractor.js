@@ -102,8 +102,10 @@ const extractRadioGroups = () => {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "GET_STATE") {
     const ats = detectATS();
+
     sendResponse({
       ats,
+      mode: ats ? getATSMode() : null,
       sessionKey: ats ? extractSessionKey() : null,
       pageInfo: scrapePageInfo(),
     });
@@ -111,10 +113,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.action === "EXTRACT_FIELDS") {
     const ats = detectATS();
+
     sendResponse({
       fields: extractFields(),
       pageInfo: scrapePageInfo(),
       ats,
+      mode: ats ? getATSMode() : null,
       sessionKey: ats ? extractSessionKey() : null,
     });
   }

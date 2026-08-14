@@ -20,7 +20,7 @@ const applicationSchema = new mongoose.Schema(
         },
         ats: {
             type: String,
-            enum: ["workday", "greenhouse", "lever", "internshala", "naukri", "other"],
+            enum: ["workday", "greenhouse", "internshala", "naukri", "wellfound", "other"],
             default: "other",
         },
         url: {

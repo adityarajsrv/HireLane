@@ -1,11 +1,24 @@
 const detectATS = () => {
   const host = window.location.hostname;
   if (host.includes("myworkdayjobs.com")) return "workday";
-  if (host.includes("greenhouse.io"))      return "greenhouse";
-  if (host.includes("lever.co"))           return "lever";
-  if (host.includes("internshala.com"))    return "internshala";
-  if (host.includes("naukri.com"))         return "naukri";
+  if (host.includes("greenhouse.io")) return "greenhouse";
+  if (host.includes("internshala.com")) return "internshala";
+  if (host.includes("naukri.com")) return "naukri";
+  if (host.includes("wellfound.com")) return "wellfound";
   return null;
+};
+
+const ATS_MODE = {
+  workday: "fill",
+  greenhouse: "fill",
+  internshala: "track",
+  naukri: "track",
+  wellfound: "cover-letter",
+};
+
+const getATSMode = () => {
+  const ats = detectATS();
+  return ats ? ATS_MODE[ats] : null;
 };
 
 const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -19,7 +32,7 @@ const hashString = (str) => {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     hash = (hash << 5) - hash + str.charCodeAt(i);
-    hash |= 0; 
+    hash |= 0;
   }
   return Math.abs(hash).toString(36);
 };
@@ -35,7 +48,7 @@ const scrapeGreenhouseModal = () => {
 
   let company = "";
   let sib = roleEl?.nextElementSibling;
-  let guard = 0; 
+  let guard = 0;
   while (sib && guard < 5) {
     const text = sib.textContent?.trim() || "";
     if (text.length > 0 && text.length < 60) { company = text; break; }
@@ -105,6 +118,35 @@ const scrapePageInfo = () => {
     return { company, role };
   }
 
+  if (ats === "wellfound") {
+    const role =
+      document.querySelector("h1, h2")?.textContent?.trim() ||
+      "Unknown Role";
+
+    const companyEl = document.querySelector('a[href*="/company/"]');
+    const company =
+      companyEl?.textContent?.trim() ||
+      "Unknown Company";
+
+    return { company, role };
+  }
+
+  if (ats === "internshala" || ats === "naukri") {
+    const role =
+      document.querySelector("h1, h2")?.textContent?.trim() ||
+      "Unknown Role";
+
+    const companyEl = document.querySelector(
+      '[class*="company"], a[href*="company"]'
+    );
+
+    const company =
+      companyEl?.textContent?.trim() ||
+      "Unknown Company";
+
+    return { company, role };
+  }
+
   if (ats === "lever") {
     const company = capitalize(window.location.hostname.split(".")[0] || "Unknown Company");
     const role = document.querySelector("h1, .posting-headline h2")?.textContent?.trim() || "Unknown Role";
@@ -144,8 +186,8 @@ const currentATS = detectATS();
 
 if (currentATS && !(currentATS === "greenhouse" && isGreenhouseJobBoard())) {
   const sessionKey = extractSessionKey();
-  const pageInfo   = scrapePageInfo();
-  const jdText     = scrapeJobDescriptionText();
+  const pageInfo = scrapePageInfo();
+  const jdText = scrapeJobDescriptionText();
 
   console.log(`[HireLane] Detected ATS: ${currentATS}, session: ${sessionKey}`);
 

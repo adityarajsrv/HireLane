@@ -47,6 +47,8 @@ router.get("/insights", async (req, res) => {
       results.reduce((sum, r) => sum + r.score, 0) / results.length
     );
 
+    const coverLettersGenerated = results.filter((r) => r.coverLetterGenerated).length;
+
     const missingCounts = {};
     results.forEach((r) => {
       r.missing.forEach((skill) => {
@@ -74,6 +76,7 @@ router.get("/insights", async (req, res) => {
         score: r.score,
         createdAt: r.createdAt,
       })),
+      coverLettersGenerated,
     });
   } catch (err) {
     console.error("JD insights error:", err);
@@ -114,6 +117,19 @@ router.post("/score", async (req, res) => {
   } catch (err) {
     console.error("Score error:", err);
     res.status(500).json({ success: false, message: "Scoring failed." });
+  }
+});
+
+router.post("/track-cover-view", async (req, res) => {
+  try {
+    await JDMatchResult.findOneAndUpdate(
+      { userId: req.user._id },
+      { $set: { coverLetterGenerated: true } },
+      { sort: { createdAt: -1 } }
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false });
   }
 });
 

@@ -90,7 +90,9 @@
       }
       #connectSection,
       #mainSection,
-      #confirmSection {
+      #confirmSection,
+      #trackSection,
+      #coverLetterSection {
         display: none;
       }
 
@@ -182,9 +184,9 @@
       <select id="atsInput">
         <option value="workday">Workday</option>
         <option value="greenhouse">Greenhouse</option>
-        <option value="lever">Lever</option>
         <option value="internshala">Internshala</option>
         <option value="naukri">Naukri</option>
+        <option value="wellfound">Wellfound</option>
         <option value="other">Other</option>
       </select>
 
@@ -216,6 +218,157 @@
       <button id="cancelConfirmBtn" class="btn btn-secondary">Cancel</button>
 
       <div id="fieldCount"></div>
+    </div>
+
+    <!-- NEW: confirmation form — shown before actual filling -->
+    <div id="confirmSection" class="card">
+      <p
+        style="
+          font-size: 12px;
+          color: #374151;
+          margin-bottom: 4px;
+          font-weight: 600;
+        "
+      >
+        Confirm application details
+      </p>
+
+      <p style="font-size: 10px; color: #9ca3af; margin-bottom: 8px">
+        We'll use this to log your application correctly.
+      </p>
+
+      <label>Company</label>
+      <input type="text" id="companyInput" placeholder="e.g. Stripe" />
+
+      <label>Role</label>
+      <input
+        type="text"
+        id="roleInput"
+        placeholder="e.g. Software Engineer II"
+      />
+
+      <label>ATS Platform</label>
+      <select id="atsInput">
+        <option value="workday">Workday</option>
+        <option value="greenhouse">Greenhouse</option>
+        <option value="internshala">Internshala</option>
+        <option value="naukri">Naukri</option>
+        <option value="wellfound">Wellfound</option>
+        <option value="other">Other</option>
+      </select>
+
+      <div
+        id="sessionResetRow"
+        style="display: none; margin-top: 8px; margin-bottom: 4px"
+      >
+        <button
+          id="resetSessionBtn"
+          type="button"
+          style="
+            background: none;
+            border: none;
+            color: #5b3df5;
+            font-size: 10px;
+            cursor: pointer;
+            padding: 0;
+            text-decoration: underline;
+          "
+        >
+          Not the same application? Start fresh
+        </button>
+      </div>
+
+      <label>Expected CTC (optional, LPA)</label>
+      <input type="number" id="ctcInput" placeholder="e.g. 18" />
+
+      <button id="confirmFillBtn" class="btn">Continue &amp; Fill</button>
+
+      <button id="cancelConfirmBtn" class="btn btn-secondary">Cancel</button>
+
+      <div id="fieldCount"></div>
+    </div>
+
+    <!-- NEW: Track mode — Internshala / Naukri -->
+    <div id="trackSection" class="card" style="display: none">
+      <p
+        style="
+          font-size: 12px;
+          color: #374151;
+          font-weight: 600;
+          margin-bottom: 4px;
+        "
+      >
+        <span id="trackAtsName"></span> uses your saved profile automatically
+      </p>
+
+      <p style="font-size: 10px; color: #9ca3af; margin-bottom: 12px">
+        No form filling needed here — just confirm details to track this
+        application.
+      </p>
+
+      <label>Company</label>
+      <input type="text" id="trackCompanyInput" />
+
+      <label>Role</label>
+      <input type="text" id="trackRoleInput" />
+
+      <button id="trackLogBtn" class="btn">Track This Application</button>
+
+      <div
+        id="trackStatusEl"
+        style="font-size: 11px; margin-top: 8px; text-align: center"
+      ></div>
+    </div>
+
+    <!-- NEW: Cover-letter mode — Wellfound -->
+    <div id="coverLetterSection" class="card" style="display: none">
+      <p
+        style="
+          font-size: 12px;
+          color: #374151;
+          font-weight: 600;
+          margin-bottom: 4px;
+        "
+      >
+        Wellfound uses your profile — generate a tailored pitch instead
+      </p>
+
+      <p style="font-size: 10px; color: #9ca3af; margin-bottom: 12px">
+        We'll scrape this job's description and write a cover letter you can
+        paste into your pitch.
+      </p>
+
+      <button id="generateCoverBtn" class="btn">Generate Cover Letter</button>
+
+      <textarea
+        id="generatedCoverText"
+        style="
+          width: 100%;
+          height: 120px;
+          margin-top: 10px;
+          display: none;
+          font-size: 11px;
+          padding: 8px;
+          border-radius: 8px;
+          border: 1px solid #e0e0ea;
+          resize: vertical;
+          font-family: inherit;
+        "
+        readonly
+      ></textarea>
+
+      <button
+        id="copyCoverBtn"
+        class="btn btn-secondary"
+        style="display: none; margin-top: 6px"
+      >
+        Copy to Clipboard
+      </button>
+
+      <div
+        id="coverStatusEl"
+        style="font-size: 11px; margin-top: 8px; text-align: center"
+      ></div>
     </div>
 
     <script src="popup.js"></script>

@@ -1,25 +1,22 @@
 {
   "manifest_version": 3,
-  "name": "HireLane - AI Job Application Autofill",
-  "version": "1.0.0",
-  "description": "Auto-fills job applications in 8 seconds. AI cover letters. Automatic tracking.",
-
+  "name": "HireLane",
+  "version": "1.1.0",
+  "description": "AI-powered job application autofill and tracking",
   "permissions": ["storage", "activeTab", "scripting"],
-
   "host_permissions": [
     "http://localhost:5000/*",
     "*://*.myworkdayjobs.com/*",
     "*://*.greenhouse.io/*",
-    "*://*.lever.co/*",
     "*://*.internshala.com/*",
-    "*://*.naukri.com/*"
+    "*://*.naukri.com/*",
+    "*://wellfound.com/*",
+    "*://*.wellfound.com/*"
   ],
-
   "background": {
     "service_worker": "background/service_worker.js",
     "type": "module"
   },
-
   "action": {
     "default_popup": "popup/popup.html",
     "default_icon": {
@@ -28,21 +25,20 @@
       "128": "icons/icon128.png"
     }
   },
-
   "content_scripts": [
     {
       "matches": [
         "*://*.myworkdayjobs.com/*",
         "*://*.greenhouse.io/*",
-        "*://*.lever.co/*",
         "*://*.internshala.com/*",
-        "*://*.naukri.com/*"
+        "*://*.naukri.com/*",
+        "*://wellfound.com/*",
+        "*://*.wellfound.com/*"
       ],
       "js": ["content/detector.js", "content/extractor.js", "content/filler.js"],
       "run_at": "document_idle"
     }
   ],
-
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
