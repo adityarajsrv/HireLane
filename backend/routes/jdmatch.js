@@ -2,6 +2,7 @@ import express from "express";
 import JDMatchResult from "../models/JDMatchResult.js";
 import { protect } from "../middlewares/authMiddleware.js";
 import Profile from "../models/Profile.js";
+import CoverLetterLog from "../models/CoverLetterLog.js";
 
 const router = express.Router();
 router.use(protect);
@@ -30,8 +31,8 @@ router.post("/", async (req, res) => {
 router.get("/insights", async (req, res) => {
   try {
     const userId = req.user._id;
-
     const results = await JDMatchResult.find({ userId }).sort({ createdAt: -1 });
+    const coverLettersGenerated = await CoverLetterLog.countDocuments({ userId });
 
     if (results.length === 0) {
       return res.json({
@@ -40,6 +41,7 @@ router.get("/insights", async (req, res) => {
         avgScore: 0,
         topMissingSkills: [],
         recent: [],
+        coverLettersGenerated,
       });
     }
 
@@ -47,7 +49,7 @@ router.get("/insights", async (req, res) => {
       results.reduce((sum, r) => sum + r.score, 0) / results.length
     );
 
-    const coverLettersGenerated = results.filter((r) => r.coverLetterGenerated).length;
+    // const coverLettersGenerated = results.filter((r) => r.coverLetterGenerated).length;
 
     const missingCounts = {};
     results.forEach((r) => {

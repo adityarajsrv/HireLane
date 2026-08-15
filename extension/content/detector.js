@@ -119,37 +119,37 @@ const scrapePageInfo = () => {
   }
 
   if (ats === "wellfound") {
-    const role =
-      document.querySelector("h1, h2")?.textContent?.trim() ||
-      "Unknown Role";
+    let role = document.querySelector("h1")?.textContent?.trim() || "";
 
-    const companyEl = document.querySelector('a[href*="/company/"]');
-    const company =
-      companyEl?.textContent?.trim() ||
-      "Unknown Company";
+    let company = "";
+    const companyLink = document.querySelector('a[href*="/company/"]');
+    if (companyLink) company = companyLink.textContent.trim();
+    if (!company) {
+      const titleMatch = document.title.match(/at\s+(.+?)\s*\|/i);
+      if (titleMatch) company = titleMatch[1].trim();
+    }
+
+    return {
+      company: company || "Unknown Company",
+      role: role || "Unknown Role",
+    };
+  }
+
+  if (ats === "naukri") {
+    const role = document.querySelector(".jd-header-title, .styles_jd-header-title__rZwM1, h1")
+      ?.textContent?.trim() || "Unknown Role";
+    const company = document.querySelector(".jd-header-comp-name, .styles_jd-header-comp-name__MvqAI, [class*='comp-name']")
+      ?.textContent?.trim() || "Unknown Company";
 
     return { company, role };
   }
 
-  if (ats === "internshala" || ats === "naukri") {
-    const role =
-      document.querySelector("h1, h2")?.textContent?.trim() ||
-      "Unknown Role";
+  if (ats === "internshala") {
+    const role = document.querySelector(".profile, .heading_4_5, h1")
+      ?.textContent?.trim() || "Unknown Role";
+    const company = document.querySelector(".company_name, .link_display_like_text")
+      ?.textContent?.trim() || "Unknown Company";
 
-    const companyEl = document.querySelector(
-      '[class*="company"], a[href*="company"]'
-    );
-
-    const company =
-      companyEl?.textContent?.trim() ||
-      "Unknown Company";
-
-    return { company, role };
-  }
-
-  if (ats === "lever") {
-    const company = capitalize(window.location.hostname.split(".")[0] || "Unknown Company");
-    const role = document.querySelector("h1, .posting-headline h2")?.textContent?.trim() || "Unknown Role";
     return { company, role };
   }
 
@@ -161,6 +161,23 @@ const scrapePageInfo = () => {
 };
 
 const scrapeJobDescriptionText = () => {
+  const ats = detectATS();
+
+  const platformSelectors = {
+    wellfound: ['[class*="job-description"]', '[data-test*="Description"]'],
+    naukri: ['.job-desc', '.JDC__dang-inner-html', '[class*="jobDescription"]'],
+    internshala: ['.internship_details', '.text-container', '#job_description'],
+  };
+
+  if (ats && platformSelectors[ats]) {
+    for (const selector of platformSelectors[ats]) {
+      const el = document.querySelector(selector);
+      if (el && el.textContent.trim().length > 200) {
+        return el.textContent.trim().slice(0, 5000);
+      }
+    }
+  }
+
   const modal = document.querySelector('[role="dialog"], [aria-modal="true"], .modal, [class*="Modal"]');
   if (modal) {
     const modalText = modal.innerText?.trim();

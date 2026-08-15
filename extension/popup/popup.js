@@ -1,29 +1,64 @@
 const API_BASE = "http://localhost:5000";
 
+const authenticatedFetch = async (url, options = {}) => {
+  const { hirelaneToken } =
+    await chrome.storage.local.get("hirelaneToken");
+
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      ...(options.headers || {}),
+      Authorization: `Bearer ${hirelaneToken}`,
+    },
+  });
+
+  if (res.status === 401) {
+    await chrome.storage.local.remove("hirelaneToken");
+
+    await init();
+
+    throw new Error(
+      "Session expired. Please sign in again."
+    );
+  }
+
+  return res;
+};
+
 const connectSection = document.getElementById("connectSection");
 const mainSection = document.getElementById("mainSection");
 const confirmSection = document.getElementById("confirmSection");
 const trackSection = document.getElementById("trackSection");
 const coverLetterSection = document.getElementById("coverLetterSection");
+
 const trackAtsName = document.getElementById("trackAtsName");
 const trackCompanyInput = document.getElementById("trackCompanyInput");
 const trackRoleInput = document.getElementById("trackRoleInput");
 const trackLogBtn = document.getElementById("trackLogBtn");
 const trackStatusEl = document.getElementById("trackStatusEl");
+
 const generateCoverBtn = document.getElementById("generateCoverBtn");
 const generatedCoverText = document.getElementById("generatedCoverText");
 const copyCoverBtn = document.getElementById("copyCoverBtn");
 const coverStatusEl = document.getElementById("coverStatusEl");
+
 const connectBtn = document.getElementById("connectBtn");
+const loginEmail = document.getElementById("loginEmail");
+const loginPassword = document.getElementById("loginPassword");
+const togglePasswordBtn = document.getElementById("togglePasswordBtn");
+const loginErrorEl = document.getElementById("loginErrorEl");
 const disconnectBtn = document.getElementById("disconnectBtn");
 const startFillBtn = document.getElementById("startFillBtn");
+
 const atsStatus = document.getElementById("atsStatus");
 const atsDot = document.getElementById("atsDot");
 const fieldCountEl = document.getElementById("fieldCount");
+
 const companyInput = document.getElementById("companyInput");
 const roleInput = document.getElementById("roleInput");
 const atsInput = document.getElementById("atsInput");
 const ctcInput = document.getElementById("ctcInput");
+
 const confirmFillBtn = document.getElementById("confirmFillBtn");
 const cancelConfirmBtn = document.getElementById("cancelConfirmBtn");
 const sessionResetRow = document.getElementById("sessionResetRow");
@@ -134,30 +169,106 @@ const init = async () => {
   }
 };
 
+// ── Password visibility toggle ──
+togglePasswordBtn.addEventListener("click", () => {
+  const isHidden = loginPassword.type === "password";
+
+  loginPassword.type = isHidden ? "text" : "password";
+  togglePasswordBtn.textContent = isHidden ? "Hide" : "Show";
+});
+
+
+// ── Login / Connect Account ──
 connectBtn.addEventListener("click", async () => {
-  const email = prompt("HireLane email:");
-  const password = prompt("HireLane password:");
-  if (!email || !password) return;
+  const email = loginEmail.value.trim();
+  const password = loginPassword.value;
+
+  loginErrorEl.style.display = "none";
+  loginErrorEl.textContent = "";
+
+  if (!email || !password) {
+    loginErrorEl.textContent =
+      "Email and password are required.";
+    loginErrorEl.style.display = "block";
+    return;
+  }
+
+  connectBtn.disabled = true;
+  connectBtn.textContent = "Signing in...";
 
   try {
-    const loginRes = await fetch(`${API_BASE}/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-      credentials: "include",
-    });
+    const loginRes = await fetch(
+      `${API_BASE}/auth/login`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+        credentials: "include",
+      }
+    );
+
     const loginData = await loginRes.json();
-    if (!loginData.success) { alert(loginData.message || "Login failed"); return; }
 
-    const tokenRes = await fetch(`${API_BASE}/auth/extension-token`, { method: "POST", credentials: "include" });
+    if (!loginData.success) {
+      loginErrorEl.textContent =
+        loginData.message || "Login failed.";
+
+      loginErrorEl.style.display = "block";
+      return;
+    }
+
+    const tokenRes = await fetch(
+      `${API_BASE}/auth/extension-token`,
+      {
+        method: "POST",
+        credentials: "include",
+      }
+    );
+
     const tokenData = await tokenRes.json();
-    if (!tokenData.success) { alert("Could not get extension token"); return; }
 
-    await chrome.storage.local.set({ hirelaneToken: tokenData.token });
-    init();
+    if (!tokenData.success) {
+      loginErrorEl.textContent =
+        "Could not connect extension.";
+
+      loginErrorEl.style.display = "block";
+      return;
+    }
+
+    // Don't keep the password around after authentication.
+    loginPassword.value = "";
+
+    await chrome.storage.local.set({
+      hirelaneToken: tokenData.token,
+    });
+
+    await init();
+
   } catch (err) {
-    alert("Connection failed: " + err.message);
+    loginErrorEl.textContent =
+      "Connection failed: " + err.message;
+
+    loginErrorEl.style.display = "block";
+
+  } finally {
+    connectBtn.disabled = false;
+    connectBtn.textContent = "Sign In";
   }
+});
+
+
+// ── Allow Enter to submit from either login field ──
+[loginEmail, loginPassword].forEach((el) => {
+  el.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      connectBtn.click();
+    }
+  });
 });
 
 disconnectBtn.addEventListener("click", async () => {
@@ -165,174 +276,186 @@ disconnectBtn.addEventListener("click", async () => {
   init();
 });
 
-trackLogBtn.addEventListener("click", async () => {
-  const company = trackCompanyInput.value.trim();
-  const role = trackRoleInput.value.trim();
+// popup.js — update trackLogBtn's click handler to also compute a score
+
+document.getElementById("trackLogBtn").addEventListener("click", async () => {
+  const company = document.getElementById("trackCompanyInput").value.trim();
+  const role    = document.getElementById("trackRoleInput").value.trim();
+  const statusEl = document.getElementById("trackStatusEl");
 
   if (!company || !role) {
-    trackStatusEl.textContent = "Company and role are required.";
-    trackStatusEl.style.color = "#e24b4a";
+    statusEl.textContent = "Company and role are required.";
+    statusEl.style.color = "#e24b4a";
     return;
   }
 
-  trackLogBtn.disabled = true;
-  trackLogBtn.textContent = "Tracking...";
-  trackStatusEl.textContent = "";
+  statusEl.textContent = "Scoring and tracking...";
+  statusEl.style.color = "#9ca3af";
 
   try {
     const tab = await getActiveTab();
+    const stateRes = await chrome.tabs.sendMessage(tab.id, { action: "GET_STATE" });
 
-    const { hirelaneToken } =
-      await chrome.storage.local.get("hirelaneToken");
-
-    const stateRes = await chrome.tabs.sendMessage(
-      tab.id,
-      { action: "GET_STATE" }
-    );
-
-    const response = await fetch(
-      `${API_BASE}/api/applications`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${hirelaneToken}`,
-        },
-        body: JSON.stringify({
-          company,
-          role,
-          ats: stateRes.ats,
-          status: "applied",
-          sessionKey: stateRes.sessionKey,
-        }),
+    // ── NEW: attempt scoring before logging, same pattern as the
+    // fill flow already uses. Naukri/Internshala JD content is
+    // usually readable directly (not hidden behind a modal), so this
+    // works without the cross-tab caching complexity Greenhouse needed.
+    let matchScore = null;
+    try {
+      const jdRes = await chrome.tabs.sendMessage(tab.id, { action: "GET_JD_TEXT" });
+      if (jdRes?.jobDescription?.length > 100) {
+        const scoreRes = await authenticatedFetch(`${API_BASE}/api/jdmatch/score`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ jobDescription: jdRes.jobDescription }),
+        });
+        const scoreData = await scoreRes.json();
+        if (scoreData.success) matchScore = scoreData.score;
       }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.message || "Failed to track application."
-      );
+    } catch {
+      // scoring is a nice-to-have here — tracking still proceeds without it
     }
 
-    trackStatusEl.textContent = "Application tracked.";
-    trackStatusEl.style.color = "#1bd29c";
+    await authenticatedFetch(`${API_BASE}/api/applications`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        company, role,
+        ats: stateRes.ats,
+        status: "applied",
+        sessionKey: stateRes.sessionKey,
+        matchScore, // ← now populated when scoring succeeds
+      }),
+    });
 
-    trackLogBtn.textContent = "Tracked ✓";
-
+    statusEl.textContent = matchScore
+      ? `Tracked — ${matchScore}% match.`
+      : "Application tracked.";
+    statusEl.style.color = "#1bd29c";
   } catch (err) {
-    trackStatusEl.textContent =
-      "Error: " + err.message;
-
-    trackStatusEl.style.color = "#e24b4a";
-
-    trackLogBtn.disabled = false;
-    trackLogBtn.textContent = "Track This Application";
+    statusEl.textContent = "Error: " + err.message;
+    statusEl.style.color = "#e24b4a";
   }
 });
 
-generateCoverBtn.addEventListener("click", async () => {
-  generateCoverBtn.disabled = true;
-  generateCoverBtn.textContent = "Generating...";
-  coverStatusEl.textContent = "";
+// popup.js — replace the entire generateCoverBtn handler
+
+let lastGeneratedCover = null; // holds state between "generate" and "track" clicks
+let lastGeneratedScore = null;
+
+document.getElementById("generateCoverBtn").addEventListener("click", async () => {
+  const btn = document.getElementById("generateCoverBtn");
+  const textArea = document.getElementById("generatedCoverText");
+  const copyBtn = document.getElementById("copyCoverBtn");
+  const trackBtn = document.getElementById("trackWellfoundBtn");
+  const statusEl = document.getElementById("coverStatusEl");
+
+  btn.disabled = true;
+  btn.textContent = "Generating...";
+  trackBtn.style.display = "none"; // hide tracking option while generating
 
   try {
     const tab = await getActiveTab();
+    const stateRes = await chrome.tabs.sendMessage(tab.id, { action: "GET_STATE" });
+    const jdRes = await chrome.tabs.sendMessage(tab.id, { action: "GET_JD_TEXT" });
 
-    const { hirelaneToken } =
-      await chrome.storage.local.get("hirelaneToken");
-
-    const stateRes = await chrome.tabs.sendMessage(
-      tab.id,
-      { action: "GET_STATE" }
-    );
-
-    const jdRes = await chrome.tabs.sendMessage(
-      tab.id,
-      { action: "GET_JD_TEXT" }
-    );
-
-    const jobDescription =
-      jdRes?.jobDescription || "";
-
-    if (jobDescription.length < 100) {
-      throw new Error(
-        "Could not read enough of the job description."
-      );
-    }
-
-    const coverRes = await fetch(
-      `${API_BASE}/api/generate-cover`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${hirelaneToken}`,
-        },
-        body: JSON.stringify({
-          jobDescription,
-          company: stateRes.pageInfo?.company,
-          role: stateRes.pageInfo?.role,
-        }),
-      }
-    );
-
+    const coverRes = await authenticatedFetch(`${API_BASE}/api/generate-cover`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        jobDescription: jdRes?.jobDescription || "",
+        company: stateRes.pageInfo.company,
+        role: stateRes.pageInfo.role,
+        source: "extension",
+      }),
+    });
     const coverData = await coverRes.json();
 
-    if (!coverRes.ok || !coverData.success) {
-      throw new Error(
-        coverData.message ||
-        "Cover letter generation failed."
-      );
+    if (!coverData.success) {
+      statusEl.textContent = coverData.message || "Generation failed.";
+      statusEl.style.color = "#e24b4a";
+      return;
     }
 
-    generatedCoverText.value =
-      coverData.coverLetter || "";
-
-    generatedCoverText.style.display = "block";
-    copyCoverBtn.style.display = "block";
-
-    coverStatusEl.textContent =
-      "Cover letter generated.";
-
-    coverStatusEl.style.color = "#1bd29c";
-
-    // Log Wellfound application
-    const applicationRes = await fetch(
-      `${API_BASE}/api/applications`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${hirelaneToken}`,
-        },
-        body: JSON.stringify({
-          company: stateRes.pageInfo?.company,
-          role: stateRes.pageInfo?.role,
-          ats: "wellfound",
-          status: "applied",
-          sessionKey: stateRes.sessionKey,
-          coverLetter: coverData.coverLetter,
-        }),
+    // ── NEW: also compute a match score alongside generation, using
+    // the same JD text — no reason to make two separate scrape calls
+    lastGeneratedScore = null;
+    if (jdRes?.jobDescription?.length > 100) {
+      try {
+        const scoreRes = await authenticatedFetch(`${API_BASE}/api/jdmatch/score`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ jobDescription: jdRes.jobDescription }),
+        });
+        const scoreData = await scoreRes.json();
+        if (scoreData.success) lastGeneratedScore = scoreData.score;
+      } catch {
+        // non-critical
       }
-    );
-
-    if (!applicationRes.ok) {
-      console.warn(
-        "[HireLane] Cover letter generated but application logging failed."
-      );
     }
+
+    lastGeneratedCover = {
+      text: coverData.coverLetter,
+      company: stateRes.pageInfo.company,
+      role: stateRes.pageInfo.role,
+      sessionKey: stateRes.sessionKey,
+    };
+
+    textArea.value = coverData.coverLetter;
+    textArea.style.display = "block";
+    copyBtn.style.display = "block";
+    trackBtn.style.display = "block"; // ← now shown, but NOT auto-clicked
+    statusEl.textContent = lastGeneratedScore
+      ? `Draft ready — ${lastGeneratedScore}% match. Not tracked yet.`
+      : "Draft ready. Not tracked yet.";
+    statusEl.style.color = "#5b3df5";
 
   } catch (err) {
-    coverStatusEl.textContent =
-      "Error: " + err.message;
-
-    coverStatusEl.style.color = "#e24b4a";
+    statusEl.textContent = "Error: " + err.message;
+    statusEl.style.color = "#e24b4a";
   } finally {
-    generateCoverBtn.disabled = false;
-    generateCoverBtn.textContent =
-      "Generate Cover Letter";
+    btn.disabled = false;
+    btn.textContent = "Generate Cover Letter";
+  }
+});
+
+// ── NEW: separate, explicit action — this is the ONLY place a
+// Wellfound application actually gets logged. Generating a draft is
+// not the same as applying; the user confirms intent with this
+// dedicated click, which is the honest UX your original design lacked.
+document.getElementById("trackWellfoundBtn").addEventListener("click", async () => {
+  const trackBtn = document.getElementById("trackWellfoundBtn");
+  const statusEl = document.getElementById("coverStatusEl");
+
+  if (!lastGeneratedCover) return;
+
+  trackBtn.disabled = true;
+  trackBtn.textContent = "Tracking...";
+
+  try {
+    await authenticatedFetch(`${API_BASE}/api/applications`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        company: lastGeneratedCover.company,
+        role: lastGeneratedCover.role,
+        ats: "wellfound",
+        status: "applied",
+        sessionKey: lastGeneratedCover.sessionKey,
+        coverLetter: lastGeneratedCover.text,
+        matchScore: lastGeneratedScore,
+      }),
+    });
+
+    statusEl.textContent = "Application tracked!";
+    statusEl.style.color = "#1bd29c";
+    trackBtn.textContent = "Tracked ✓";
+    // Leave it disabled after success — prevents accidental duplicate logging
+  } catch (err) {
+    statusEl.textContent = "Error: " + err.message;
+    statusEl.style.color = "#e24b4a";
+    trackBtn.disabled = false;
+    trackBtn.textContent = "I've Applied — Track This";
   }
 });
 

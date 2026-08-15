@@ -135,10 +135,95 @@
     </div>
 
     <div id="connectSection" class="card">
-      <p style="font-size: 12px; color: #6b7280; margin-bottom: 10px">
-        Connect your HireLane account to start autofilling applications.
+      <p style="font-size: 12px; color: #6b7280; margin-bottom: 12px">
+        Sign in to connect your HireLane account.
       </p>
-      <button id="connectBtn" class="btn">Connect Account</button>
+
+      <label
+        style="
+          font-size: 10px;
+          font-weight: 600;
+          color: #9ca3af;
+          text-transform: uppercase;
+          display: block;
+          margin-bottom: 4px;
+        "
+        >Email</label
+      >
+      <input
+        type="email"
+        id="loginEmail"
+        placeholder="you@email.com"
+        autocomplete="email"
+        style="
+          width: 100%;
+          height: 32px;
+          border: 1px solid #e0e0ea;
+          border-radius: 8px;
+          padding: 0 10px;
+          font-size: 12px;
+          margin-bottom: 10px;
+          outline: none;
+        "
+      />
+
+      <label
+        style="
+          font-size: 10px;
+          font-weight: 600;
+          color: #9ca3af;
+          text-transform: uppercase;
+          display: block;
+          margin-bottom: 4px;
+        "
+        >Password</label
+      >
+      <div style="position: relative; margin-bottom: 12px">
+        <input
+          type="password"
+          id="loginPassword"
+          placeholder="••••••••"
+          autocomplete="current-password"
+          style="
+            width: 100%;
+            height: 32px;
+            border: 1px solid #e0e0ea;
+            border-radius: 8px;
+            padding: 0 32px 0 10px;
+            font-size: 12px;
+            outline: none;
+          "
+        />
+        <button
+          type="button"
+          id="togglePasswordBtn"
+          style="
+            position: absolute;
+            right: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 11px;
+            color: #9ca3af;
+          "
+        >
+          Show
+        </button>
+      </div>
+
+      <div
+        id="loginErrorEl"
+        style="
+          font-size: 11px;
+          color: #e24b4a;
+          margin-bottom: 8px;
+          display: none;
+        "
+      ></div>
+
+      <button id="connectBtn" class="btn">Sign In</button>
     </div>
 
     <div id="mainSection">
@@ -320,7 +405,6 @@
       ></div>
     </div>
 
-    <!-- NEW: Cover-letter mode — Wellfound -->
     <div id="coverLetterSection" class="card" style="display: none">
       <p
         style="
@@ -332,14 +416,11 @@
       >
         Wellfound uses your profile — generate a tailored pitch instead
       </p>
-
       <p style="font-size: 10px; color: #9ca3af; margin-bottom: 12px">
         We'll scrape this job's description and write a cover letter you can
         paste into your pitch.
       </p>
-
       <button id="generateCoverBtn" class="btn">Generate Cover Letter</button>
-
       <textarea
         id="generatedCoverText"
         style="
@@ -351,12 +432,9 @@
           padding: 8px;
           border-radius: 8px;
           border: 1px solid #e0e0ea;
-          resize: vertical;
-          font-family: inherit;
         "
         readonly
       ></textarea>
-
       <button
         id="copyCoverBtn"
         class="btn btn-secondary"
@@ -365,6 +443,14 @@
         Copy to Clipboard
       </button>
 
+      <!-- NEW: separate, explicit confirmation that they actually applied -->
+      <button
+        id="trackWellfoundBtn"
+        class="btn"
+        style="display: none; margin-top: 6px"
+      >
+        I've Applied — Track This
+      </button>
       <div
         id="coverStatusEl"
         style="font-size: 11px; margin-top: 8px; text-align: center"

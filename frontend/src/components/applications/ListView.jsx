@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const STATUS_STYLE = {
   applied: { bg: "#f0f0f4", color: "#6b7280" },
@@ -16,13 +16,25 @@ const ATS_STYLE = {
   other: { bg: "#f0f0f4", color: "#6b7280" },
 };
 
-const ListView = ({ applications, onRowClick, onBulkDelete }) => {
+const ListView = ({ applications, onRowClick, onBulkDelete, onEdit, }) => {
   const [selected, setSelected] = useState([]);
   const [deleting, setDeleting] = useState(false);
   const [confirmBulk, setConfirmBulk] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setOpenMenuId(null);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
 
   const toggleSelect = (id) => {
-    setConfirmBulk(false); 
+    setConfirmBulk(false);
     setSelected((prev) =>
       prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
     );
@@ -109,8 +121,67 @@ const ListView = ({ applications, onRowClick, onBulkDelete }) => {
                 <td style={{ padding: "0 12px" }}>
                   <span style={{ fontSize: 10, fontFamily: "JetBrains Mono, monospace", color: "#9ca3af" }}>{dateStr}</span>
                 </td>
-                <td style={{ padding: "0 12px", width: 40 }} onClick={(e) => e.stopPropagation()}>
-                  <button style={{ background: "none", border: "none", cursor: "pointer", color: "#9ca3af", fontSize: 16, padding: "4px 6px", borderRadius: 6 }}>···</button>
+                <td
+                  style={{
+                    padding: "0 12px",
+                    width: 40,
+                    position: "relative",
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <button
+                    onClick={() =>
+                      setOpenMenuId(
+                        openMenuId === app._id ? null : app._id
+                      )
+                    }
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      color: "#9ca3af",
+                      fontSize: 16,
+                      padding: "4px 6px",
+                      borderRadius: 6,
+                    }}
+                  >
+                    ···
+                  </button>
+
+                  {openMenuId === app._id && (
+                    <div
+                      ref={menuRef}
+                      className="absolute bg-white rounded-xl overflow-hidden z-50"
+                      style={{ right: 12, top: "100%", width: 120, border: "1px solid #f0f0f4", boxShadow: "0 8px 24px rgba(0,0,0,0.1)" }}
+                    >
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation(); // ← THE ACTUAL FIX — must be here, not just on the <td>
+                          setOpenMenuId(null);
+                          onEdit(app);
+                        }}
+                        className="w-full text-left px-3 py-2"
+                        style={{ fontSize: 12, fontFamily: "DM Sans, sans-serif", color: "#374151", background: "none", border: "none", cursor: "pointer" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = "#f5f4ff")}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenMenuId(null);
+                          onBulkDelete([app._id]);
+                        }}
+                        className="w-full text-left px-3 py-2"
+                        style={{ fontSize: 12, fontFamily: "DM Sans, sans-serif", color: "#e24b4a", background: "none", border: "none", cursor: "pointer" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = "#fcebeb")}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = "none")}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
                 </td>
               </tr>
             );

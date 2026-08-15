@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import useAnalytics    from "../hooks/useAnalytics.js";
+import useAnalytics from "../hooks/useAnalytics.js";
 import useApplications from "../hooks/useApplications.js";
 import useQuota from "../hooks/useQuota.js";
 import ProfileCompletenessBanner from "../components/profile/ProfileCompletenessBanner.jsx";
@@ -116,11 +116,11 @@ const FunnelChart = ({ funnel }) => {
   if (!funnel) return null;
   const total = Object.values(funnel).reduce((a, b) => a + b, 0) || 1;
   const stages = [
-    { stage: "Applied",   count: funnel.applied,   color: "#5b3df5" },
-    { stage: "OA",        count: funnel.oa,         color: "#7f77dd" },
-    { stage: "Interview", count: funnel.interview,  color: "#1bd29c" },
-    { stage: "Offer",     count: funnel.offer,      color: "#0f6e56" },
-    { stage: "Rejected",  count: funnel.rejected,   color: "#e24b4a" },
+    { stage: "Applied", count: funnel.applied, color: "#5b3df5" },
+    { stage: "OA", count: funnel.oa, color: "#7f77dd" },
+    { stage: "Interview", count: funnel.interview, color: "#1bd29c" },
+    { stage: "Offer", count: funnel.offer, color: "#0f6e56" },
+    { stage: "Rejected", count: funnel.rejected, color: "#e24b4a" },
   ];
 
   return (
@@ -213,7 +213,15 @@ const UpcomingCard = ({ applications }) => {
 };
 
 const STATUS_STYLE = { applied: { bg: "#f0f0f4", color: "#6b7280" }, oa: { bg: "#ede8ff", color: "#5b3df5" }, interview: { bg: "#e1f5ee", color: "#0f6e56" }, rejected: { bg: "#fcebeb", color: "#e24b4a" }, offer: { bg: "#e1f5ee", color: "#0f6e56" } };
-const ATS_STYLE = { greenhouse: { bg: "#ede8ff", color: "#5b3df5" }, workday: { bg: "#f0f0f4", color: "#6b7280" }, lever: { bg: "#e1f5ee", color: "#0f6e56" }, internshala: { bg: "#faeeda", color: "#854f0b" }, naukri: { bg: "#fcebeb", color: "#e24b4a" }, other: { bg: "#f0f0f4", color: "#6b7280" } };
+const ATS_STYLE = {
+  greenhouse: { bg: "#ede8ff", color: "#5b3df5" },
+  workday: { bg: "#f0f0f4", color: "#6b7280" },
+  lever: { bg: "#e1f5ee", color: "#0f6e56" },
+  internshala: { bg: "#faeeda", color: "#854f0b" },
+  naukri: { bg: "#fcebeb", color: "#e24b4a" },
+  wellfound: { bg: "#ede8ff", color: "#5b3df5" },
+  other: { bg: "#f0f0f4", color: "#6b7280" },
+};
 
 const RecentApps = ({ applications, onViewAll }) => (
   <div className="bg-white rounded-2xl mb-4" style={{ border: "1px solid #f0f0f4" }}>
@@ -250,7 +258,7 @@ const RecentApps = ({ applications, onViewAll }) => (
 const Dashboard = ({ onNavigate }) => {
   const { data: analytics, loading: analyticsLoading } = useAnalytics(30);
   const { applications, loading: appsLoading } = useApplications({ limit: 8 });
-  const { applications: allApps } = useApplications(); 
+  const { applications: allApps } = useApplications();
 
   const isLoading = analyticsLoading || appsLoading;
 

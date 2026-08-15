@@ -4,6 +4,7 @@ import BoardView from "../components/applications/BoardView.jsx";
 import ListView from "../components/applications/ListView.jsx";
 import DetailPanel from "../components/applications/DetailPanel.jsx";
 import AddApplicationModal from "../components/applications/AddApplicationModal.jsx";
+import EditApplicationModal from "../components/applications/EditApplicationModal.jsx";
 import useDebounce from "../hooks/useDebounce.js";
 
 const Applications = ({ initialSearch = "" }) => {
@@ -18,6 +19,7 @@ const Applications = ({ initialSearch = "" }) => {
 
   const [view, setView] = useState("board");
   const [selectedApp, setSelectedApp] = useState(null);
+  const [editingApp, setEditingApp] = useState(null);
   const [search, setSearch] = useState(initialSearch);
   const [showAddModal, setShowAddModal] = useState(false);
   const [createError, setCreateError] = useState("");
@@ -187,7 +189,7 @@ const Applications = ({ initialSearch = "" }) => {
           onCardClick={setSelectedApp}
         />
       ) : (
-        <ListView applications={filtered} onRowClick={setSelectedApp} onBulkDelete={bulkDeleteApplications} />
+        <ListView applications={filtered} onRowClick={setSelectedApp} onBulkDelete={bulkDeleteApplications} onEdit={setEditingApp} />
       )}
 
       <DetailPanel
@@ -203,6 +205,13 @@ const Applications = ({ initialSearch = "" }) => {
           onCreate={handleCreate}
         />
       )}
+      {editingApp && (
+        <EditApplicationModal
+          application={editingApp}
+          onClose={() => setEditingApp(null)}
+          onSave={updateApplication}
+        />
+      )}  
     </div>
   );
 };

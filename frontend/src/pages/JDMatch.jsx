@@ -85,6 +85,7 @@ const JDMatch = () => {
           jobDescription: jd,
           company: extractCompany(jd),
           role: extractRole(jd),
+          source: "web",
         });
         coverLetter = coverRes.data.coverLetter;
       } catch (coverErr) {

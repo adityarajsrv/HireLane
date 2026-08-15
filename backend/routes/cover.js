@@ -3,13 +3,14 @@ import Profile from "../models/Profile.js";
 import { protect } from "../middlewares/authMiddleware.js";
 import { generateCoverLetter } from "../services/gemini.js";
 import { checkAICallQuotaRedis } from "../middlewares/quota.js";
+import CoverLetterLog from "../models/CoverLetterLog.js";
 
 const router = express.Router();
 router.use(protect);
 
 router.post("/", checkAICallQuotaRedis, async (req, res) => {
     try {
-        const { jobDescription, company, role } = req.body;
+        const { jobDescription, company, role, source } = req.body;
 
         if (!jobDescription || !company || !role) {
             return res.status(400).json({
@@ -40,13 +41,16 @@ router.post("/", checkAICallQuotaRedis, async (req, res) => {
             cvBullets: profile.cvBullets,
         });
 
-        res.json({
-            success: true,
-            coverLetter,
-            wordCount: coverLetter.split(/\s+/).length,
+        await CoverLetterLog.create({
+            userId: req.user._id,
+            company: company || "",
+            role: role || "",
+            source: source === "extension" ? "extension" : "web",
         });
-    }catch(err){
-        if(err.status===429){
+
+        res.json({ success: true, coverLetter, wordCount: coverLetter.split(/\s+/).length });
+    } catch (err) {
+        if (err.status === 429) {
             return res.status(429).json({
                 success: false,
                 message: "AI quota exceeded. Please wait and try again.",
