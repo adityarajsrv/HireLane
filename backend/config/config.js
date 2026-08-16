@@ -19,6 +19,9 @@ const config = {
     JWT_EXPIRES_IN: requireEnv("JWT_EXPIRES_IN") || "7d",
     GEMINI_API_KEY: requireEnv("GEMINI_API_KEY"),
     REDIS_URL: requireEnv("REDIS_URL"),
+    GOOGLE_CLIENT_ID: requireEnv("GOOGLE_CLIENT_ID"),
+    GOOGLE_CLIENT_SECRET: requireEnv("GOOGLE_CLIENT_SECRET"),
+    GOOGLE_CALLBACK_URL: requireEnv("GOOGLE_CALLBACK_URL"),
 
     isDev: process.env.NODE_ENV === "development",
     isProd: process.env.NODE_ENV === "production",

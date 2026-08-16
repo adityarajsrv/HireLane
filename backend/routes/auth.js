@@ -7,6 +7,8 @@ import config from "../config/config.js";
 import Profile from "../models/Profile.js";
 import Application from "../models/Application.js";
 import JDMatchResult from "../models/JDMatchResult.js";
+import { authLimiter } from "../middlewares/rateLimit.js";
+import passport from "../config/passport.js";
 
 const router = express.Router();
 
@@ -38,7 +40,7 @@ const issueSession = async (res, user, req) => {
     res.cookie("refreshToken", refreshToken, { ...cookieOptions, maxAge: refresh_token_days * 24 * 60 * 60 * 1000, path: "/auth/refresh" });
 }
 
-router.post("/register", async (req, res) => {
+router.post("/register", authLimiter, async (req, res) => {
     try {
         const { name, email, password } = req.body;
 
@@ -80,7 +82,7 @@ router.post("/register", async (req, res) => {
     }
 });
 
-router.post("/login", async (req, res) => {
+router.post("/login", authLimiter, async (req, res) => {
     try {
         const { email, password } = req.body;
 
@@ -93,9 +95,6 @@ router.post("/login", async (req, res) => {
 
         const user = await User.findOne({ email: email.toLowerCase() }).select("+password");
 
-        console.log("User found:", !!user);
-        console.log("Provider:", user?.provider);
-        console.log("Has password:", !!user?.password);
 
         if (!user) {
             return res.status(401).json({ success: false, message: "Invalid credentials." });
@@ -109,7 +108,6 @@ router.post("/login", async (req, res) => {
         }
 
         const isMatch = await user.comparePassword(password);
-        console.log("Password match:", isMatch);
 
         if (!isMatch) {
             return res.status(401).json({ success: false, message: "Invalid credentials." });
@@ -236,6 +234,35 @@ router.delete("/account", protect, async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to delete account." });
   }
 });
+
+router.get("/google", passport.authenticate("google", {
+  scope: ["profile", "email"],
+  session: false,
+}));
+
+router.get("/google/callback",
+  passport.authenticate("google", { session: false, failureRedirect: `${config.FRONTEND_URL}/auth?error=google_failed` }),
+  async (req, res) => {
+    const user = req.user;
+    const accessToken = createAccessToken(user);
+    const refreshToken = createRefreshToken();
+    const refreshTokenHash = hashRefreshToken(refreshToken);
+
+    await Session.create({
+      userId: user._id,
+      refreshTokenHash,
+      deviceType: "web",
+      userAgent: req.headers["user-agent"] || null,
+      ip: req.ip,
+      expiresAt: new Date(Date.now() + refresh_token_days * 24 * 60 * 60 * 1000),
+    });
+
+    res.cookie("accessToken", accessToken, { ...cookieOptions, maxAge: 15 * 60 * 1000 });
+    res.cookie("refreshToken", refreshToken, { ...cookieOptions, maxAge: refresh_token_days * 24 * 60 * 60 * 1000, path: "/auth/refresh" });
+
+    res.redirect(`${config.FRONTEND_URL}/dashboard`);
+  }
+);
 
 export default router;
 

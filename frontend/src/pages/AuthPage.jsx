@@ -443,11 +443,11 @@ export default function AuthPage() {
   };
 
   const handleSubmit = async (e) => {
-   e.preventDefault();
+    e.preventDefault();
     setError("");
     setLoading(true);
 
-     try {
+    try {
       if (isSignup) {
         if (password !== confirm) {
           setError("Passwords do not match.");
@@ -458,9 +458,9 @@ export default function AuthPage() {
         await login(email, password);
       }
       navigate("/dashboard");
-    }catch(err){
+    } catch (err) {
       setError(err.response?.data?.message || "Something went wrong. Please try again.");
-    }finally{
+    } finally {
       setLoading(false);
     }
   };
@@ -527,6 +527,10 @@ export default function AuthPage() {
             </p>
           </div>
           <button
+            type="button"
+            onClick={() => {
+              window.location.href = `${import.meta.env.VITE_API_URL}/auth/google`;
+            }}
             className="w-full flex items-center justify-center gap-2.5 text-[12.5px] font-medium text-gray-700 rounded-xl transition-all cursor-pointer mb-4 hover:bg-gray-50"
             style={{
               height: 38,
@@ -647,12 +651,11 @@ export default function AuthPage() {
                     placeholder="Re-enter your password"
                     autoComplete="off"
                     className={`w-full pl-8 pr-8 text-[12.5px] text-gray-900 placeholder-gray-300 bg-white rounded-lg border outline-none transition-all focus:shadow-[0_0_0_3px_rgba(91,61,245,0.08)]
-                      ${
-                        confirm.length > 0
-                          ? passwordsMatch
-                            ? "border-[#1bd29c] focus:border-[#1bd29c]"
-                            : "border-red-300 focus:border-red-400"
-                          : "border-gray-200 focus:border-[#5b3df5]"
+                      ${confirm.length > 0
+                        ? passwordsMatch
+                          ? "border-[#1bd29c] focus:border-[#1bd29c]"
+                          : "border-red-300 focus:border-red-400"
+                        : "border-gray-200 focus:border-[#5b3df5]"
                       }`}
                     style={{ height: 34 }}
                   />

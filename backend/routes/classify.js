@@ -6,12 +6,13 @@ import { classifyField } from "../services/gemini.js";
 import { generateFieldSignature } from "../utils/signature.js";
 import { checkAICallQuotaRedis } from '../middlewares/quota.js';
 import redis from "../config/redis.js";
+import { aiLimiter } from '../middlewares/rateLimit.js';
 
 const router = express.Router();
 
 router.use(protect)
 
-router.post('/', checkAICallQuotaRedis, async (req, res) => {
+router.post('/', aiLimiter, checkAICallQuotaRedis, async (req, res) => {
     try {
         const { ats, fields } = req.body;
         if (!ats || !fields || !Array.isArray(fields) || fields.length === 0) {

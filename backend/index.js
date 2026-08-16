@@ -13,32 +13,47 @@ import applicationRoutes from "./routes/applications.js";
 import analyticsRoutes from "./routes/analytics.js";
 import quotaRoutes from "./routes/quota.js";
 import jdMatchRoutes from "./routes/jdmatch.js";
+import passport from "./config/passport.js";
 
 const app = express();
 
-app.use(helmet());
-
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (
-        !origin ||
-        origin === config.FRONTEND_URL ||
-        (config.isDev && origin.startsWith("chrome-extension://"))
-      ) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      frameAncestors: ["'none'"], 
     },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-  })
-);
+  },
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+}));
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (origin === config.FRONTEND_URL) return callback(null, true);
+
+    if (config.isProd && origin === `chrome-extension://${config.EXTENSION_ID}`) {
+      return callback(null, true);
+    }
+    if (config.isDev && origin.startsWith("chrome-extension://")) {
+      return callback(null, true);
+    }
+
+    callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+}));
 
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 app.use(cookieParser());
+app.use(passport.initialize());
 
 if (config.isDev) {
     app.use(morgan("dev"));

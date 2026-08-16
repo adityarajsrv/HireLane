@@ -6,14 +6,14 @@ const userSchema = new mongoose.Schema(
     name: {
       type: String,
       required: [true, "Name is required"],
-      trim: true,          
+      trim: true,
       maxlength: [100, "Name cannot exceed 100 characters"],
     },
     email: {
       type: String,
       required: [true, "Email is required"],
-      unique: true,        
-      lowercase: true,      
+      unique: true,
+      lowercase: true,
       trim: true,
       match: [
         /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
@@ -23,16 +23,24 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       minlength: [8, "Password must be at least 8 characters"],
+      validate: {
+        validator: function (v) {
+          return /[A-Za-z]/.test(v) && /[0-9]/.test(v);
+        },
+        message: "Password must contain at least one letter and one number",
+      },
       select: false,
     },
-    provider: {
-      type: String,
-      enum: ["email", "google"],
-      default: "email",
+    googleId: { 
+      type: String, 
+      default: null, 
+      sparse: true, 
+      index: true 
     },
-    googleId: {
-      type: String,
-      default: null,
+    provider: { 
+      type: String, 
+      enum: ["email", "google"], 
+      default: "email" 
     },
     avatar: {
       type: String,
@@ -58,25 +66,25 @@ const userSchema = new mongoose.Schema(
 );
 
 userSchema.pre("save", async function (next) {
-    if (!this.isModified("password")) return;
-    if (!this.password) return;
+  if (!this.isModified("password")) return;
+  if (!this.password) return;
 
-    if (this.password.startsWith("$2b$") || this.password.startsWith("$2a$")) return;
-    
-    this.password = await bcrypt.hash(this.password, 12);
+  if (this.password.startsWith("$2b$") || this.password.startsWith("$2a$")) return;
+
+  this.password = await bcrypt.hash(this.password, 12);
 })
 
 userSchema.methods.comparePassword = async function (candidatePassword) {
-    return await bcrypt.compare(candidatePassword, this.password);
+  return await bcrypt.compare(candidatePassword, this.password);
 }
 
 userSchema.set("toJSON", {
-    transform: (doc, ret) => {
-        delete ret.password;
-        delete ret.__v;
-        delete ret.googleId;
-        return ret;
-    }
+  transform: (doc, ret) => {
+    delete ret.password;
+    delete ret.__v;
+    delete ret.googleId;
+    return ret;
+  }
 });
 
 const User = mongoose.model("User", userSchema);
