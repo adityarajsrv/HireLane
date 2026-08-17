@@ -13,3 +13,9 @@ export const aiLimiter = rateLimit({
   max: 10,
   message: { success: false, message: "Too many requests. Please slow down." },
 });
+
+export const otpLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 3,
+  message: { success: false, message: "Too many requests. Please wait a few minutes." },
+});

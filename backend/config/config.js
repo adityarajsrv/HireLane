@@ -22,7 +22,8 @@ const config = {
     GOOGLE_CLIENT_ID: requireEnv("GOOGLE_CLIENT_ID"),
     GOOGLE_CLIENT_SECRET: requireEnv("GOOGLE_CLIENT_SECRET"),
     GOOGLE_CALLBACK_URL: requireEnv("GOOGLE_CALLBACK_URL"),
-
+    RESEND_API_KEY: requireEnv("RESEND_API_KEY"),
+    
     isDev: process.env.NODE_ENV === "development",
     isProd: process.env.NODE_ENV === "production",
 };

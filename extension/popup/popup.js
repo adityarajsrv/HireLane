@@ -43,10 +43,9 @@ const copyCoverBtn = document.getElementById("copyCoverBtn");
 const coverStatusEl = document.getElementById("coverStatusEl");
 
 const connectBtn = document.getElementById("connectBtn");
-const loginEmail = document.getElementById("loginEmail");
-const loginPassword = document.getElementById("loginPassword");
-const togglePasswordBtn = document.getElementById("togglePasswordBtn");
+const pairCodeInput = document.getElementById("pairCodeInput");
 const loginErrorEl = document.getElementById("loginErrorEl");
+
 const disconnectBtn = document.getElementById("disconnectBtn");
 const startFillBtn = document.getElementById("startFillBtn");
 
@@ -169,106 +168,126 @@ const init = async () => {
   }
 };
 
-// ── Password visibility toggle ──
-togglePasswordBtn.addEventListener("click", () => {
-  const isHidden = loginPassword.type === "password";
-
-  loginPassword.type = isHidden ? "text" : "password";
-  togglePasswordBtn.textContent = isHidden ? "Hide" : "Show";
-});
-
-
-// ── Login / Connect Account ──
+// ── Connect using dashboard pairing code ──
 connectBtn.addEventListener("click", async () => {
-  const email = loginEmail.value.trim();
-  const password = loginPassword.value;
+  const code = pairCodeInput.value.trim();
 
   loginErrorEl.style.display = "none";
   loginErrorEl.textContent = "";
 
-  if (!email || !password) {
+  if (code.length !== 6 || !/^\d{6}$/.test(code)) {
     loginErrorEl.textContent =
-      "Email and password are required.";
+      "Enter the 6-digit code from your dashboard.";
     loginErrorEl.style.display = "block";
     return;
   }
 
   connectBtn.disabled = true;
-  connectBtn.textContent = "Signing in...";
+  connectBtn.textContent = "Connecting...";
 
   try {
-    const loginRes = await fetch(
-      `${API_BASE}/auth/login`,
+    const res = await fetch(
+      `${API_BASE}/auth/extension-pair/redeem`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-        credentials: "include",
+        body: JSON.stringify({ code }),
       }
     );
 
-    const loginData = await loginRes.json();
+    const data = await res.json();
 
-    if (!loginData.success) {
+    if (!data.success) {
       loginErrorEl.textContent =
-        loginData.message || "Login failed.";
-
+        data.message || "Invalid or expired pairing code.";
       loginErrorEl.style.display = "block";
       return;
     }
-
-    const tokenRes = await fetch(
-      `${API_BASE}/auth/extension-token`,
-      {
-        method: "POST",
-        credentials: "include",
-      }
-    );
-
-    const tokenData = await tokenRes.json();
-
-    if (!tokenData.success) {
-      loginErrorEl.textContent =
-        "Could not connect extension.";
-
-      loginErrorEl.style.display = "block";
-      return;
-    }
-
-    // Don't keep the password around after authentication.
-    loginPassword.value = "";
 
     await chrome.storage.local.set({
-      hirelaneToken: tokenData.token,
+      hirelaneToken: data.token,
     });
 
-    await init();
+    pairCodeInput.value = "";
 
+    await init();
   } catch (err) {
     loginErrorEl.textContent =
       "Connection failed: " + err.message;
-
     loginErrorEl.style.display = "block";
-
   } finally {
     connectBtn.disabled = false;
-    connectBtn.textContent = "Sign In";
+    connectBtn.textContent = "Connect";
   }
 });
 
+pairCodeInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    connectBtn.click();
+  }
+});
 
-// ── Allow Enter to submit from either login field ──
-[loginEmail, loginPassword].forEach((el) => {
-  el.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      connectBtn.click();
+// ── Connect using dashboard pairing code ──
+connectBtn.addEventListener("click", async () => {
+  const code = pairCodeInput.value.trim();
+
+  loginErrorEl.style.display = "none";
+  loginErrorEl.textContent = "";
+
+  if (code.length !== 6 || !/^\d{6}$/.test(code)) {
+    loginErrorEl.textContent =
+      "Enter the 6-digit code from your dashboard.";
+    loginErrorEl.style.display = "block";
+    return;
+  }
+
+  connectBtn.disabled = true;
+  connectBtn.textContent = "Connecting...";
+
+  try {
+    const res = await fetch(
+      `${API_BASE}/auth/extension-pair/redeem`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ code }),
+      }
+    );
+
+    const data = await res.json();
+
+    if (!data.success) {
+      loginErrorEl.textContent =
+        data.message || "Invalid or expired pairing code.";
+      loginErrorEl.style.display = "block";
+      return;
     }
-  });
+
+    await chrome.storage.local.set({
+      hirelaneToken: data.token,
+    });
+
+    pairCodeInput.value = "";
+
+    await init();
+  } catch (err) {
+    loginErrorEl.textContent =
+      "Connection failed: " + err.message;
+    loginErrorEl.style.display = "block";
+  } finally {
+    connectBtn.disabled = false;
+    connectBtn.textContent = "Connect";
+  }
+});
+
+pairCodeInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    connectBtn.click();
+  }
 });
 
 disconnectBtn.addEventListener("click", async () => {

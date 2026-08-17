@@ -18,6 +18,7 @@ import Insights from "./pages/Insights.jsx";
 import useProfile from "./hooks/useProfile.js";
 import OnboardingWizard from "./pages/OnboardingWizard.jsx";
 import ExtensionSetup from "./pages/ExtensionSetup.jsx";
+import ForgotPassword from "./pages/ForgotPassword.jsx";
 
 const DashboardApp = () => {
   const [activePage, setActivePage] = useState("dashboard");
@@ -87,6 +88,7 @@ const App = () => {
               </ProtectedRoute>
             }
           />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>

@@ -9,6 +9,12 @@ import Application from "../models/Application.js";
 import JDMatchResult from "../models/JDMatchResult.js";
 import { authLimiter } from "../middlewares/rateLimit.js";
 import passport from "../config/passport.js";
+import Otp from "../models/Otp.js";
+import { generateOtp, hashOtp } from "../utils/otp.js";
+import { sendOtpEmail } from "../services/email.js";
+import { otpLimiter } from "../middlewares/rateLimit.js";
+import PairingCode from "../models/PairingCode.js";
+import crypto from "crypto";
 
 const router = express.Router();
 
@@ -263,6 +269,134 @@ router.get("/google/callback",
     res.redirect(`${config.FRONTEND_URL}/dashboard`);
   }
 );
+
+router.post("/send-verify-otp", otpLimiter, protect, async (req, res) => {
+  if (req.user.isVerified) {
+    return res.json({ success: true, message: "Already verified." });
+  }
+  const otp = generateOtp();
+  await Otp.create({
+    email: req.user.email,
+    codeHash: hashOtp(otp),
+    purpose: "verify_email",
+    expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+  });
+  await sendOtpEmail(req.user.email, otp, "verify");
+  res.json({ success: true, message: "Verification code sent." });
+});
+
+router.post("/verify-email", protect, async (req, res) => {
+  const { code } = req.body;
+  if (!code) return res.status(400).json({ success: false, message: "Code is required." });
+
+  const record = await Otp.findOne({
+    email: req.user.email,
+    purpose: "verify_email",
+    codeHash: hashOtp(code),
+  });
+
+  if (!record) {
+    return res.status(400).json({ success: false, message: "Invalid or expired code." });
+  }
+
+  await User.findByIdAndUpdate(req.user._id, { isVerified: true });
+  await record.deleteOne(); 
+  res.json({ success: true, message: "Email verified." });
+});
+
+router.post("/forgot-password", otpLimiter, async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ success: false, message: "Email is required." });
+
+  const user = await User.findOne({ email: email.toLowerCase() });
+
+  if (!user || user.provider !== "email") {
+    return res.json({ success: true, message: "If that email exists, a code has been sent." });
+  }
+
+  const otp = generateOtp();
+  await Otp.create({
+    email: user.email,
+    codeHash: hashOtp(otp),
+    purpose: "reset_password",
+    expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+  });
+  await sendOtpEmail(user.email, otp, "reset");
+
+  res.json({ success: true, message: "If that email exists, a code has been sent." });
+});
+
+router.post("/reset-password", otpLimiter, async (req, res) => {
+  const { email, code, newPassword } = req.body;
+
+  if (!email || !code || !newPassword) {
+    return res.status(400).json({ success: false, message: "All fields are required." });
+  }
+  if (newPassword.length < 8) {
+    return res.status(400).json({ success: false, message: "Password must be at least 8 characters." });
+  }
+
+  const record = await Otp.findOne({
+    email: email.toLowerCase(),
+    purpose: "reset_password",
+    codeHash: hashOtp(code),
+  });
+
+  if (!record) {
+    return res.status(400).json({ success: false, message: "Invalid or expired code." });
+  }
+
+  const user = await User.findOne({ email: email.toLowerCase() });
+  if (!user) {
+    return res.status(400).json({ success: false, message: "Invalid or expired code." });
+  }
+
+  user.password = newPassword;
+  await user.save();
+
+  await record.deleteOne();
+  await Session.deleteMany({ userId: user._id });
+
+  res.json({ success: true, message: "Password reset successfully. Please log in." });
+});
+
+router.post("/extension-pair/generate", protect, async (req, res) => {
+  const code = crypto.randomInt(100000, 999999).toString();
+
+  await PairingCode.create({
+    userId: req.user._id,
+    code,
+    expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+  });
+
+  res.json({ success: true, code });
+});
+
+router.post("/extension-pair/redeem", async (req, res) => {
+  const { code } = req.body;
+  if (!code) return res.status(400).json({ success: false, message: "Code is required." });
+
+  const record = await PairingCode.findOne({ code });
+  if (!record) {
+    return res.status(400).json({ success: false, message: "Invalid or expired code." });
+  }
+
+  const user = await User.findById(record.userId);
+  if (!user || !user.isActive) {
+    return res.status(400).json({ success: false, message: "User not found." });
+  }
+
+  await record.deleteOne();
+
+  const token = createAccessToken(user);
+  await Profile.findOneAndUpdate(
+    { userId: user._id },
+    { $set: { extensionLastConnectedAt: new Date() } },
+    { upsert: true }
+  );
+
+  res.json({ success: true, token, user });
+});
 
 export default router;
 

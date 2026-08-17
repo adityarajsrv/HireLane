@@ -136,82 +136,27 @@
 
     <div id="connectSection" class="card">
       <p style="font-size: 12px; color: #6b7280; margin-bottom: 12px">
-        Sign in to connect your HireLane account.
+        Get a pairing code from your HireLane dashboard (Extension page) and
+        enter it below.
       </p>
 
-      <label
-        style="
-          font-size: 10px;
-          font-weight: 600;
-          color: #9ca3af;
-          text-transform: uppercase;
-          display: block;
-          margin-bottom: 4px;
-        "
-        >Email</label
-      >
       <input
-        type="email"
-        id="loginEmail"
-        placeholder="you@email.com"
-        autocomplete="email"
+        type="text"
+        id="pairCodeInput"
+        placeholder="123456"
+        maxlength="6"
+        inputmode="numeric"
         style="
           width: 100%;
-          height: 32px;
+          height: 40px;
+          text-align: center;
+          font-size: 20px;
+          letter-spacing: 4px;
           border: 1px solid #e0e0ea;
           border-radius: 8px;
-          padding: 0 10px;
-          font-size: 12px;
-          margin-bottom: 10px;
-          outline: none;
+          margin-bottom: 12px;
         "
       />
-
-      <label
-        style="
-          font-size: 10px;
-          font-weight: 600;
-          color: #9ca3af;
-          text-transform: uppercase;
-          display: block;
-          margin-bottom: 4px;
-        "
-        >Password</label
-      >
-      <div style="position: relative; margin-bottom: 12px">
-        <input
-          type="password"
-          id="loginPassword"
-          placeholder="••••••••"
-          autocomplete="current-password"
-          style="
-            width: 100%;
-            height: 32px;
-            border: 1px solid #e0e0ea;
-            border-radius: 8px;
-            padding: 0 32px 0 10px;
-            font-size: 12px;
-            outline: none;
-          "
-        />
-        <button
-          type="button"
-          id="togglePasswordBtn"
-          style="
-            position: absolute;
-            right: 6px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            cursor: pointer;
-            font-size: 11px;
-            color: #9ca3af;
-          "
-        >
-          Show
-        </button>
-      </div>
 
       <div
         id="loginErrorEl"
@@ -223,7 +168,7 @@
         "
       ></div>
 
-      <button id="connectBtn" class="btn">Sign In</button>
+      <button id="connectBtn" class="btn">Connect</button>
     </div>
 
     <div id="mainSection">

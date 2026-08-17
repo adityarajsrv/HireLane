@@ -603,11 +603,7 @@ export default function AuthPage() {
               }
               extra={
                 !isSignup && (
-                  <a
-                    href="#"
-                    className="text-[10.5px] hover:underline"
-                    style={{ color: "#5b3df5" }}
-                  >
+                  <a href="/forgot-password" style={{ fontSize: 11, color: "#5b3df5", textAlign: "right", display: "block", marginTop: 4 }}>
                     Forgot password?
                   </a>
                 )

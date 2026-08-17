@@ -4,6 +4,16 @@ import api from "../lib/axios.js";
 
 const ExtensionSetup = () => {
   const [connectionInfo, setConnectionInfo] = useState(null);
+  const [pairCode, setPairCode] = useState(null);
+  const [generating, setGenerating] = useState(false);
+
+  const generatePairCode = async () => {
+    setGenerating(true);
+    const res = await api.post("/auth/extension-pair/generate");
+    setPairCode(res.data.code);
+    setGenerating(false);
+    setTimeout(() => setPairCode(null), 5 * 60 * 1000);
+  };
 
   useEffect(() => {
     api.get("/api/profile").then((res) => {
@@ -97,26 +107,120 @@ const ExtensionSetup = () => {
           ))}
         </div>
 
-        <div className="bg-white rounded-2xl p-5 mb-4" style={{ border: "1px solid #f0f0f4" }}>
-          <div style={{ fontSize: 14, fontFamily: "DM Sans, sans-serif", fontWeight: 500, color: "#0a0a0f", marginBottom: 16 }}>
+        <div
+          className="bg-white rounded-2xl p-5 mb-4"
+          style={{ border: "1px solid #f0f0f4" }}
+        >
+          <div
+            style={{
+              fontSize: 14,
+              fontFamily: "DM Sans, sans-serif",
+              fontWeight: 500,
+              color: "#0a0a0f",
+              marginBottom: 16,
+            }}
+          >
             Step 3 — Connect Your Account
           </div>
+
           <div style={stepStyle}>
             <div style={numberStyle}>1</div>
-            <p style={{ fontSize: 12, fontFamily: "DM Sans, sans-serif", color: "#374151", lineHeight: 1.6, paddingTop: 2 }}>
-              Click the HireLane icon in your Chrome toolbar.
+
+            <p
+              style={{
+                fontSize: 12,
+                fontFamily: "DM Sans, sans-serif",
+                color: "#374151",
+                lineHeight: 1.6,
+                paddingTop: 2,
+              }}
+            >
+              Click <strong>Generate Pairing Code</strong> below.
             </p>
           </div>
+
+          {pairCode ? (
+            <div
+              style={{
+                fontSize: 32,
+                fontFamily: "JetBrains Mono, monospace",
+                letterSpacing: 8,
+                textAlign: "center",
+                background: "#f5f4ff",
+                padding: 20,
+                borderRadius: 12,
+                color: "#5b3df5",
+                fontWeight: 700,
+                marginBottom: 12,
+              }}
+            >
+              {pairCode}
+            </div>
+          ) : (
+            <button
+              onClick={generatePairCode}
+              disabled={generating}
+              style={{
+                height: 38,
+                padding: "0 20px",
+                background: "#5b3df5",
+                color: "white",
+                border: "none",
+                borderRadius: 10,
+                fontSize: 12,
+                fontFamily: "DM Sans, sans-serif",
+                fontWeight: 500,
+                cursor: generating ? "not-allowed" : "pointer",
+                opacity: generating ? 0.6 : 1,
+              }}
+            >
+              {generating ? "Generating..." : "Generate Pairing Code"}
+            </button>
+          )}
+
+          <p
+            style={{
+              fontSize: 11,
+              color: "#9ca3af",
+              fontFamily: "DM Sans, sans-serif",
+              marginTop: 8,
+              marginBottom: 16,
+            }}
+          >
+            Type this code into the HireLane extension popup. Expires in 5 minutes.
+          </p>
+
           <div style={stepStyle}>
             <div style={numberStyle}>2</div>
-            <p style={{ fontSize: 12, fontFamily: "DM Sans, sans-serif", color: "#374151", lineHeight: 1.6, paddingTop: 2 }}>
-              Click "Connect Account" and sign in with the same email and password you use here.
+
+            <p
+              style={{
+                fontSize: 12,
+                fontFamily: "DM Sans, sans-serif",
+                color: "#374151",
+                lineHeight: 1.6,
+                paddingTop: 2,
+              }}
+            >
+              Open the HireLane extension in your Chrome toolbar and enter
+              the 6-digit pairing code.
             </p>
           </div>
+
           <div style={stepStyle}>
             <div style={numberStyle}>3</div>
-            <p style={{ fontSize: 12, fontFamily: "DM Sans, sans-serif", color: "#374151", lineHeight: 1.6, paddingTop: 2 }}>
-              Visit any supported job posting (Workday, Greenhouse, Lever, Internshala, or Naukri) and click "Fill Application" from the popup.
+
+            <p
+              style={{
+                fontSize: 12,
+                fontFamily: "DM Sans, sans-serif",
+                color: "#374151",
+                lineHeight: 1.6,
+                paddingTop: 2,
+              }}
+            >
+              Once connected, visit any supported job posting and use the
+              appropriate HireLane action from the extension popup.
             </p>
           </div>
         </div>
