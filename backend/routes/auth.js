@@ -305,59 +305,71 @@ router.post("/verify-email", protect, async (req, res) => {
 });
 
 router.post("/forgot-password", otpLimiter, async (req, res) => {
-  const { email } = req.body;
-  if (!email) return res.status(400).json({ success: false, message: "Email is required." });
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ success: false, message: "Email is required." });
 
-  const user = await User.findOne({ email: email.toLowerCase() });
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user || user.provider !== "email") {
+      return res.json({ success: true, message: "If that email exists, a code has been sent." });
+    }
 
-  if (!user || user.provider !== "email") {
-    return res.json({ success: true, message: "If that email exists, a code has been sent." });
+    const otp = generateOtp();
+    await Otp.create({
+      email: user.email,
+      codeHash: hashOtp(otp),
+      purpose: "reset_password",
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+    });
+    try {
+      await sendOtpEmail(user.email, otp, "reset");
+    } catch (emailErr) {
+      console.error("[forgot-password] Email send failed:", emailErr.message);
+    }
+
+    res.json({ success: true, message: "If that email exists, a code has been sent." });
+  } catch (err) {
+    console.error("Forgot password error:", err);
+    res.status(500).json({ success: false, message: "Something went wrong. Please try again." });
   }
-
-  const otp = generateOtp();
-  await Otp.create({
-    email: user.email,
-    codeHash: hashOtp(otp),
-    purpose: "reset_password",
-    expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-  });
-  await sendOtpEmail(user.email, otp, "reset");
-
-  res.json({ success: true, message: "If that email exists, a code has been sent." });
 });
 
 router.post("/reset-password", otpLimiter, async (req, res) => {
-  const { email, code, newPassword } = req.body;
+  try {
+    const { email, code, newPassword } = req.body;
 
-  if (!email || !code || !newPassword) {
-    return res.status(400).json({ success: false, message: "All fields are required." });
+    if (!email || !code || !newPassword) {
+      return res.status(400).json({ success: false, message: "All fields are required." });
+    }
+    if (newPassword.length < 8) {
+      return res.status(400).json({ success: false, message: "Password must be at least 8 characters." });
+    }
+
+    const record = await Otp.findOne({
+      email: email.toLowerCase(),
+      purpose: "reset_password",
+      codeHash: hashOtp(code),
+    });
+
+    if (!record) {
+      return res.status(400).json({ success: false, message: "Invalid or expired code." });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return res.status(400).json({ success: false, message: "Invalid or expired code." });
+    }
+
+    user.password = newPassword;
+    await user.save(); 
+    await record.deleteOne();
+    await Session.deleteMany({ userId: user._id }); 
+
+    res.json({ success: true, message: "Password reset successfully. Please log in." });
+  } catch (err) {
+    console.error("Reset password error:", err);
+    res.status(500).json({ success: false, message: "Something went wrong. Please try again." });
   }
-  if (newPassword.length < 8) {
-    return res.status(400).json({ success: false, message: "Password must be at least 8 characters." });
-  }
-
-  const record = await Otp.findOne({
-    email: email.toLowerCase(),
-    purpose: "reset_password",
-    codeHash: hashOtp(code),
-  });
-
-  if (!record) {
-    return res.status(400).json({ success: false, message: "Invalid or expired code." });
-  }
-
-  const user = await User.findOne({ email: email.toLowerCase() });
-  if (!user) {
-    return res.status(400).json({ success: false, message: "Invalid or expired code." });
-  }
-
-  user.password = newPassword;
-  await user.save();
-
-  await record.deleteOne();
-  await Session.deleteMany({ userId: user._id });
-
-  res.json({ success: true, message: "Password reset successfully. Please log in." });
 });
 
 router.post("/extension-pair/generate", protect, async (req, res) => {

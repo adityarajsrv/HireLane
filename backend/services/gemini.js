@@ -42,11 +42,58 @@ ${resumeText}
   return JSON.parse(clean);
 };
 
-const generateCoverLetter = async ({ jobDescription, cvBullets, targetRole, company }) => {
+const COVER_LETTER_STYLES = {
+  formal: {
+    label: "Formal Cover Letter",
+    instruction: `
+Write in a traditional, professional cover letter tone. Structured,
+respectful, slightly conservative in phrasing. Suitable for
+enterprise companies, finance, government-adjacent, or traditional
+corporate roles. No casual language, no jokes, no startup slang.
+    `,
+  },
+  pitch: {
+    label: "Startup Pitch",
+    instruction: `
+Write like a founder-to-founder pitch, not a formal letter. Direct,
+confident, energetic. Lead with your strongest concrete achievement
+immediately — no throat-clearing. Short punchy sentences. This is
+for early-stage startups (Wellfound-style) where a stiff formal
+letter would feel out of place and read as a mismatch with the
+company's own culture.
+    `,
+  },
+  technical: {
+    label: "Technical Deep-Dive",
+    instruction: `
+Write with heavy emphasis on specific technical decisions, tradeoffs,
+and measurable outcomes (latency numbers, scale figures, architecture
+choices). Assume the reader is a technical hiring manager or
+engineering lead who will skim for concrete signal, not soft skills
+language. Minimal fluff, maximum specificity.
+    `,
+  },
+  concise: {
+    label: "Concise & Direct",
+    instruction: `
+Maximum 100 words total. One paragraph. State your single strongest
+match to the role, one number/outcome to back it up, and a direct
+statement of interest. No preamble, no closing pleasantries beyond
+one line.
+    `,
+  },
+};
+
+const generateCoverLetter = async ({ jobDescription, cvBullets, targetRole, company, style = "formal" }) => {
+  const styleConfig = COVER_LETTER_STYLES[style] || COVER_LETTER_STYLES.formal;
+
   const interaction = await ai.models.generateContent({
     model: "gemini-3.1-flash-lite",
     contents: `
-Write a concise, tailored cover letter opening (3 paragraphs max) for this job application.
+Write a tailored cover letter opening for this job application.
+
+STYLE: ${styleConfig.label}
+${styleConfig.instruction}
 
 Company: ${company}
 Role: ${targetRole}
@@ -57,13 +104,17 @@ ${cvBullets.map((b, i) => `${i + 1}. ${b}`).join("\n")}
 Job Description:
 ${jobDescription.slice(0, 2000)}
 
-Rules:
-- Do NOT use generic phrases like "I am writing to express my interest"
-- Lead with the strongest matching achievement
-- Reference specific requirements from the job description
-- Sound like a senior engineer wrote it, not a template
-- Maximum 200 words
-- No subject line, no salutation, no sign-off — just the body paragraphs
+Universal rules regardless of style:
+- Never use "I am writing to express my interest" or equivalent
+  generic openers
+- Lead with the single strongest matching achievement, always
+  something concrete and specific from the candidate's bullets above,
+  never a vague personality claim
+- Reference at least one specific requirement or detail from the
+  job description directly — proves this wasn't copy-pasted
+- No subject line, no salutation ("Dear Hiring Manager"), no sign-off
+  — just the body content itself
+- Maximum 200 words unless the style explicitly says otherwise
     `,
   });
 

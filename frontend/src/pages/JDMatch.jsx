@@ -8,6 +8,14 @@ const JDMatch = () => {
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [coverStyle, setCoverStyle] = useState("formal");
+
+  const COVER_STYLES = [
+    { value: "formal", label: "Formal" },
+    { value: "pitch", label: "Startup Pitch" },
+    { value: "technical", label: "Technical" },
+    { value: "concise", label: "Concise" },
+  ];
 
   const handleCopyCover = () => {
     navigator.clipboard.writeText(result.recommendation);
@@ -86,6 +94,7 @@ const JDMatch = () => {
           company: extractCompany(jd),
           role: extractRole(jd),
           source: "web",
+          style: coverStyle,
         });
         coverLetter = coverRes.data.coverLetter;
       } catch (coverErr) {
@@ -250,6 +259,28 @@ const JDMatch = () => {
             </div>
           )}
 
+          <div className="mb-3">
+            <label style={{ fontSize: 9, fontFamily: "JetBrains Mono, monospace", color: "#9ca3af", textTransform: "uppercase", marginBottom: 6, display: "block" }}>
+              Cover Letter Style
+            </label>
+            <div className="flex gap-2">
+              {COVER_STYLES.map((s) => (
+                <button
+                  key={s.value}
+                  onClick={() => setCoverStyle(s.value)}
+                  style={{
+                    flex: 1, height: 32, borderRadius: 8,
+                    border: coverStyle === s.value ? "1px solid #5b3df5" : "1px solid #e0e0ea",
+                    background: coverStyle === s.value ? "#ede8ff" : "white",
+                    color: coverStyle === s.value ? "#5b3df5" : "#6b7280",
+                    fontSize: 11, fontFamily: "DM Sans, sans-serif", cursor: "pointer",
+                  }}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <button
             onClick={handleAnalyse}
             disabled={!jd.trim() || loading}

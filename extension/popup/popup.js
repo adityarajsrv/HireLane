@@ -357,9 +357,8 @@ document.getElementById("trackLogBtn").addEventListener("click", async () => {
   }
 });
 
-// popup.js — replace the entire generateCoverBtn handler
 
-let lastGeneratedCover = null; // holds state between "generate" and "track" clicks
+let lastGeneratedCover = null;
 let lastGeneratedScore = null;
 
 document.getElementById("generateCoverBtn").addEventListener("click", async () => {
@@ -368,6 +367,7 @@ document.getElementById("generateCoverBtn").addEventListener("click", async () =
   const copyBtn = document.getElementById("copyCoverBtn");
   const trackBtn = document.getElementById("trackWellfoundBtn");
   const statusEl = document.getElementById("coverStatusEl");
+  const coverStyleSelect = document.getElementById("coverStyleSelect");
 
   btn.disabled = true;
   btn.textContent = "Generating...";
@@ -386,6 +386,7 @@ document.getElementById("generateCoverBtn").addEventListener("click", async () =
         company: stateRes.pageInfo.company,
         role: stateRes.pageInfo.role,
         source: "extension",
+        style: coverStyleSelect.value,
       }),
     });
     const coverData = await coverRes.json();
