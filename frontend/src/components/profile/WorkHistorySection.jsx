@@ -27,7 +27,7 @@ const WorkHistorySection = ({ workExperience, education, onSave }) => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const cleanJobs = jobs.filter((j) => j.company || j.title);
+    const cleanJobs = jobs.filter((j) => j.company || j.title);
       const cleanEdus = edus.filter((e) => e.school || e.degree);
       await onSave({ workExperience: cleanJobs, education: cleanEdus });
     } finally {
