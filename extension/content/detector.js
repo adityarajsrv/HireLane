@@ -44,51 +44,6 @@ const extractWellfoundSessionKey = () => {
   return null;
 };
 
-const findWellfoundModal = () => {
-  const closeButtons = document.querySelectorAll('button, [role="button"]');
-  for (const btn of closeButtons) {
-    const svg = btn.querySelector("svg");
-    const isCloseLike = svg && btn.getBoundingClientRect().width < 50 && btn.getBoundingClientRect().height < 50;
-    if (isCloseLike) {
-      let node = btn.parentElement;
-      for (let i = 0; i < 6 && node; i++) {
-        if (node.getBoundingClientRect().width > 600) return node;
-        node = node.parentElement;
-      }
-    }
-  }
-  return document.querySelector('[role="dialog"], [aria-modal="true"]');
-};
-
-const findWellfoundLeftColumn = (modal) => {
-  if (!modal) return null;
-  const companyLink = modal.querySelector('a[href*="/company/"]');
-  if (!companyLink) return null;
-
-  let node = companyLink.parentElement;
-  for (let i = 0; i < 10 && node; i++) {
-    const hasApplyHeading = Array.from(node.querySelectorAll("h1, h2, h3")).some(
-      (h) => h.textContent.trim().toLowerCase().startsWith("apply to")
-    );
-    if (!hasApplyHeading && node.getBoundingClientRect().width > 300) {
-      return node;
-    }
-    node = node.parentElement;
-  }
-  return companyLink.closest("div");
-};
-
-const cleanCompanyName = (text) => {
-  if (!text) return "";
-  return text
-    .replace(/Actively Hiring/gi, "")
-    .replace(/\d+-\d+\s*Employees?/gi, "")
-    .replace(/\d+\+?\s*Employees?/gi, "")
-    .replace(/•/g, "")
-    .split("\n")[0]
-    .trim();
-};
-
 const scrapeGreenhouseModal = () => {
   const modal = document.querySelector(
     '[role="dialog"], [aria-modal="true"], .modal, [class*="Modal"]'
@@ -142,6 +97,49 @@ const extractSessionKey = () => {
   return `${window.location.hostname}:${window.location.pathname.split("/").slice(0, 3).join("/")}`;
 };
 
+const scrapeWellfoundInfo = () => {
+  const roleHeading = document.querySelector(
+    "h1.inline.text-xl.font-semibold.text-black"
+  );
+
+  if (!roleHeading) {
+    return {
+      company: "Unknown Company",
+      role: "Unknown Role",
+    };
+  }
+
+  const role = roleHeading.textContent.trim();
+
+  let company = "";
+
+  const roleSection = roleHeading.parentElement;
+
+  if (roleSection) {
+    const companySection = roleSection.previousElementSibling;
+
+    if (companySection) {
+      const companySpan = companySection.querySelector(
+        'a[href*="/company/"] span.text-sm.font-semibold.text-black'
+      );
+
+      if (companySpan) {
+        company = companySpan.textContent.trim();
+      }
+    }
+  }
+
+  console.log("[HireLane] Wellfound extracted:", {
+    company,
+    role,
+  });
+
+  return {
+    company: company || "Unknown Company",
+    role: role || "Unknown Role",
+  };
+};
+
 const scrapePageInfo = () => {
   const ats = detectATS();
 
@@ -175,35 +173,7 @@ const scrapePageInfo = () => {
   }
 
   if (ats === "wellfound") {
-    const modal = findWellfoundModal();
-    const leftColumn = findWellfoundLeftColumn(modal);
-    const scope = leftColumn || modal || document;
-
-    let company = "";
-    const companyLink = scope.querySelector('a[href*="/company/"]');
-    if (companyLink) {
-      const directText = Array.from(companyLink.childNodes)
-        .filter((n) => n.nodeType === Node.TEXT_NODE)
-        .map((n) => n.textContent.trim())
-        .join(" ")
-        .trim();
-      company = cleanCompanyName(directText || companyLink.textContent);
-    }
-
-    let role = "";
-    const headings = scope.querySelectorAll("h1, h2");
-    for (const h of headings) {
-      const text = h.textContent.trim();
-      if (text.length > 2 && !text.toLowerCase().startsWith("apply to") && !text.toLowerCase().includes("actively hiring")) {
-        role = text;
-        break;
-      }
-    }
-
-    return {
-      company: company || "Unknown Company",
-      role: role || "Unknown Role",
-    };
+    return scrapeWellfoundInfo();
   }
 
   if (ats === "naukri") {
@@ -235,20 +205,43 @@ const scrapeJobDescriptionText = () => {
   const ats = detectATS();
 
   if (ats === "wellfound") {
-    const modal = findWellfoundModal();
-    const leftColumn = findWellfoundLeftColumn(modal);
-    const scope = leftColumn || modal;
-    if (scope) {
-      const text = scope.innerText?.trim();
-      if (text && text.length > 200) return text.slice(0, 5000);
+    const roleHeading = document.querySelector("h1.text-xl.font-semibold") || document.querySelector("h1.font-semibold");
+    if (roleHeading) {
+      let node = roleHeading.parentElement;
+      for (let i = 0; i < 8 && node; i++) {
+        const text = node.innerText?.trim();
+        if (text && text.length > 400) {
+          return text.slice(0, 5000);
+        }
+        node = node.parentElement;
+      }
     }
   }
 
   const platformSelectors = {
-    wellfound: ['[class*="job-description"]', '[data-test*="Description"]'],
     naukri: ['.job-desc', '.JDC__dang-inner-html', '[class*="jobDescription"]'],
     internshala: ['.internship_details', '.text-container', '#job_description'],
   };
+
+  if (ats === "wellfound") {
+    const roleHeading = document.querySelector(
+      "h1.text-xl.font-semibold"
+    );
+
+    if (roleHeading) {
+      const container = roleHeading.closest(
+        "div.w-full, section, main"
+      );
+
+      if (container) {
+        const text = container.innerText?.trim();
+
+        if (text && text.length > 200) {
+          return text.slice(0, 5000);
+        }
+      }
+    }
+  }
 
   if (ats && platformSelectors[ats]) {
     for (const selector of platformSelectors[ats]) {
@@ -282,17 +275,28 @@ const scrapeJobDescriptionText = () => {
 
 const currentATS = detectATS();
 
-if (currentATS && !(currentATS === "greenhouse" && isGreenhouseJobBoard())) {
+if (
+  currentATS &&
+  currentATS !== "wellfound" &&
+  !(currentATS === "greenhouse" && isGreenhouseJobBoard())
+) {
   const sessionKey = extractSessionKey();
   const pageInfo = scrapePageInfo();
   const jdText = scrapeJobDescriptionText();
 
-  console.log(`[HireLane] Detected ATS: ${currentATS}, session: ${sessionKey}`);
+  console.log(
+    `[HireLane] Detected ATS: ${currentATS}, session: ${sessionKey}`
+  );
 
   if (jdText.length > 200) {
-    chrome.storage.local.set({ [`jd_${sessionKey}`]: jdText });
+    chrome.storage.local.set({
+      [`jd_${sessionKey}`]: jdText,
+    });
   }
-  chrome.storage.local.set({ [`pageinfo_${sessionKey}`]: pageInfo });
+
+  chrome.storage.local.set({
+    [`pageinfo_${sessionKey}`]: pageInfo,
+  });
 }
 
 if (currentATS === "greenhouse" && isGreenhouseJobBoard()) {
@@ -331,31 +335,77 @@ if (currentATS === "greenhouse" && isGreenhouseJobBoard()) {
 if (currentATS === "wellfound") {
   console.log("[HireLane] Wellfound detected — watching for job panel changes");
 
-  let lastSlug = null;
+  let lastCachedSlug = null;
+  let wellfoundTimer = null;
 
   const tryCacheCurrentJob = () => {
     const sessionKey = extractWellfoundSessionKey();
-    if (!sessionKey || sessionKey === lastSlug) return;
 
-    lastSlug = sessionKey;
+    if (!sessionKey) {
+      return;
+    }
+
     const pageInfo = scrapePageInfo();
+
+    console.log("[HireLane][Wellfound] Scrape attempt:", {
+      sessionKey,
+      company: pageInfo.company,
+      role: pageInfo.role,
+    });
+
+    if (
+      pageInfo.company === "Unknown Company" ||
+      pageInfo.role === "Unknown Role"
+    ) {
+      console.log(
+        "[HireLane][Wellfound] DOM not ready yet — retrying..."
+      );
+
+      scheduleWellfoundScrape();
+      return;
+    }
+
+    if (sessionKey === lastCachedSlug) {
+      return;
+    }
+
+    lastCachedSlug = sessionKey;
+
     const jdText = scrapeJobDescriptionText();
 
-    console.log(`[HireLane] Wellfound job: ${pageInfo.company} — ${pageInfo.role}, key: ${sessionKey}`);
+    console.log(
+      `[HireLane] Wellfound job: ${pageInfo.company} — ${pageInfo.role}, key: ${sessionKey}`
+    );
+
+    chrome.storage.local.set({
+      [`pageinfo_${sessionKey}`]: pageInfo,
+    });
 
     if (jdText.length > 200) {
-      chrome.storage.local.set({ [`jd_${sessionKey}`]: jdText });
+      chrome.storage.local.set({
+        [`jd_${sessionKey}`]: jdText,
+      });
     }
-    chrome.storage.local.set({ [`pageinfo_${sessionKey}`]: pageInfo });
+  };
+
+  const scheduleWellfoundScrape = () => {
+    clearTimeout(wellfoundTimer);
+
+    wellfoundTimer = setTimeout(() => {
+      tryCacheCurrentJob();
+    }, 1000);
   };
 
   const observer = new MutationObserver(() => {
-    clearTimeout(this._wfTimer);
-    this._wfTimer = setTimeout(tryCacheCurrentJob, 400);
+    scheduleWellfoundScrape();
   });
-  observer.observe(document.body, { childList: true, subtree: true });
 
-  tryCacheCurrentJob();
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+  });
+
+  scheduleWellfoundScrape();
 }
 
 console.log("[HireLane] Content script loaded, ATS:", detectATS());
