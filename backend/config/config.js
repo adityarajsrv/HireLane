@@ -24,7 +24,7 @@ const config = {
     GOOGLE_CALLBACK_URL: requireEnv("GOOGLE_CALLBACK_URL"),
     GMAIL_USER: requireEnv("GMAIL_USER"),
     GMAIL_APP_PASSWORD: requireEnv("GMAIL_APP_PASSWORD"),
-
+    EXTENSION_ID: process.env.EXTENSION_ID || null,
     isDev: process.env.NODE_ENV === "development",
     isProd: process.env.NODE_ENV === "production",
 };

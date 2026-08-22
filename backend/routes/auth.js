@@ -21,7 +21,7 @@ const router = express.Router();
 const cookieOptions = {
     httpOnly: true,
     secure: config.isProd,
-    sameSite: config.isProd ? "strict" : "lax",
+    sameSite: config.isProd ? "none" : "lax",
 }
 
 const refresh_token_days = 7

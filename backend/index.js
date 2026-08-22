@@ -36,19 +36,28 @@ app.use(helmet({
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
-    if (origin === config.FRONTEND_URL) return callback(null, true);
 
-    if (config.isProd && origin === `chrome-extension://${config.EXTENSION_ID}`) {
+    if (origin === config.FRONTEND_URL) {
       return callback(null, true);
     }
+
+    if (
+      config.isProd &&
+      config.EXTENSION_ID &&
+      origin === `chrome-extension://${config.EXTENSION_ID}`
+    ) {
+      return callback(null, true);
+    }
+
     if (config.isDev && origin.startsWith("chrome-extension://")) {
       return callback(null, true);
     }
 
-    callback(new Error("Not allowed by CORS"));
+    callback(new Error(`CORS blocked for origin: ${origin}`));
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 }));
 
 app.use(express.json({ limit: "10kb" }));
