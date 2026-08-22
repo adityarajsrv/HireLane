@@ -279,7 +279,7 @@ export default function Tracker() {
                   Fall 2026 - Job hunt
                 </p>
                 <p className="mt-1 text-[12px] text-gray-400">
-                  Synced across LinkedIn, Greenhouse & Lever
+                  Synced across Workday, Greenhouse & Wellfound
                 </p>
               </div>
               <div className="rounded-full bg-[#f5f3ff] px-3 py-1 text-[11px] font-semibold text-[#5b3df5]">

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 import api from "../lib/axios.js";
 
@@ -26,10 +26,6 @@ const Settings = ({ onNavigate }) => {
     } finally {
       setLoggingOutAll(false);
     }
-  };
-
-  const handleUpgrade = () => {
-    showMsg("Pro plan billing isn't live yet — check back soon.", true);
   };
 
   const handleDeleteAccount = async () => {
@@ -90,14 +86,24 @@ const Settings = ({ onNavigate }) => {
             Plan & Limits
           </div>
           <p style={{ fontSize: 12, fontFamily: "DM Sans, sans-serif", color: "#6b7280", marginBottom: 16 }}>
-            Free plan: 20 tracked applications, 5 AI calls/day, 15 fills/month.
+            You're on the Free plan: 20 tracked applications, 5 AI calls/day, 15 fills/month.
           </p>
-          <button
-            onClick={handleUpgrade}
-            style={{ height: 36, padding: "0 20px", background: "#5b3df5", color: "white", border: "none", borderRadius: 10, fontSize: 12, fontFamily: "Syne, sans-serif", fontWeight: 500, cursor: "pointer" }}
-          >
-            Upgrade to Pro
-          </button>
+          <div className="rounded-xl p-3" style={{ background: "#f5f4ff", border: "1px solid #ede8ff" }}>
+            <p style={{ fontSize: 12, fontFamily: "DM Sans, sans-serif", color: "#374151", marginBottom: 8 }}>
+              Pro plan (unlimited tracking, unlimited AI calls) isn't live yet.
+              Interested when it launches?
+            </p>
+            <button
+              onClick={() => (window.location.href = "mailto:your.actual.email@gmail.com?subject=Interested in HireLane Pro")}
+              style={{
+                height: 32, padding: "0 16px", background: "white", color: "#5b3df5",
+                border: "1px solid #5b3df5", borderRadius: 8, fontSize: 12,
+                fontFamily: "DM Sans, sans-serif", fontWeight: 500, cursor: "pointer",
+              }}
+            >
+              Notify me
+            </button>
+          </div>
         </div>
 
         <div style={sectionStyle}>

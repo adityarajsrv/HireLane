@@ -10,15 +10,23 @@ import Working from "../components/Working";
 
 const Home = () => {
   return (
-    <div>
+    <div id="home">
       <Navbar />
       <Hero />
-      <Working />
-      <Features />
+      <section id="how-it-works" className="scroll-mt-24">
+        <Working />
+      </section>
+      <section id="features" className="scroll-mt-24">
+        <Features />
+      </section>
       <Tracker />
       <AI />
-      <Pricing />
-      <CTA />
+      <section id="pricing" className="scroll-mt-24">
+        <Pricing />
+      </section>
+      <section id="contact" className="scroll-mt-24">
+        <CTA />
+      </section>
       <Footer />
     </div>
   );

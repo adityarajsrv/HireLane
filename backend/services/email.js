@@ -40,3 +40,111 @@ export const sendOtpEmail = async (to, otp, purpose) => {
     throw err;
   }
 };
+
+export const sendContactEmail = async ({ name, email, message }) => {
+  try {
+    const info = await transporter.sendMail({
+      from: `"HireLane Contact" <${config.GMAIL_USER}>`,
+      to: config.GMAIL_USER,
+      replyTo: email,
+      subject: `HireLane Contact — ${name || "Website visitor"}`,
+      html: `
+        <div style="font-family:'Segoe UI',sans-serif;max-width:600px;margin:0 auto;padding:24px;">
+          
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:24px;">
+            <div style="
+              width:28px;
+              height:28px;
+              border-radius:7px;
+              background:#5b3df5;
+              color:white;
+              display:flex;
+              align-items:center;
+              justify-content:center;
+              font-weight:bold;
+              font-size:14px;
+            ">
+              H
+            </div>
+
+            <span style="font-size:18px;font-weight:700;">
+              <span style="color:#1bd29c;">Hire</span><span style="color:#5b3df5;">Lane</span>
+            </span>
+          </div>
+
+          <h2 style="color:#0a0a0f;font-size:20px;margin-bottom:20px;">
+            New Contact Message
+          </h2>
+
+          <div style="
+            background:#f5f4ff;
+            border-radius:12px;
+            padding:16px;
+            margin-bottom:16px;
+          ">
+            <p style="margin:0 0 8px;color:#6b7280;font-size:12px;">
+              <strong>Name</strong>
+            </p>
+            <p style="margin:0;color:#0a0a0f;font-size:14px;">
+              ${name || "Not provided"}
+            </p>
+          </div>
+
+          <div style="
+            background:#f5f4ff;
+            border-radius:12px;
+            padding:16px;
+            margin-bottom:16px;
+          ">
+            <p style="margin:0 0 8px;color:#6b7280;font-size:12px;">
+              <strong>Email</strong>
+            </p>
+            <p style="margin:0;color:#0a0a0f;font-size:14px;">
+              ${email}
+            </p>
+          </div>
+
+          <div style="
+            background:#f5f4ff;
+            border-radius:12px;
+            padding:16px;
+          ">
+            <p style="margin:0 0 8px;color:#6b7280;font-size:12px;">
+              <strong>Message</strong>
+            </p>
+
+            <p style="
+              margin:0;
+              color:#0a0a0f;
+              font-size:14px;
+              line-height:1.6;
+              white-space:pre-wrap;
+            ">
+              ${message}
+            </p>
+          </div>
+
+        </div>
+      `,
+      text: `
+New HireLane Contact Message
+
+Name: ${name || "Not provided"}
+Email: ${email}
+
+Message:
+${message}
+      `,
+    });
+
+    console.log(
+      "[Email] Contact message sent successfully | messageId:",
+      info.messageId
+    );
+
+    return info;
+  } catch (err) {
+    console.error("[Email] Contact send failed:", err.message);
+    throw err;
+  }
+};

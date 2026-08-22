@@ -19,6 +19,9 @@ import useProfile from "./hooks/useProfile.js";
 import OnboardingWizard from "./pages/OnboardingWizard.jsx";
 import ExtensionSetup from "./pages/ExtensionSetup.jsx";
 import ForgotPassword from "./pages/ForgotPassword.jsx";
+import Privacy from "./pages/Privacy.jsx";
+import Terms from "./pages/Terms.jsx";
+import Contact from "./pages/Contact.jsx";
 
 const DashboardApp = () => {
   const [activePage, setActivePage] = useState("dashboard");
@@ -89,6 +92,9 @@ const App = () => {
             }
           />
           <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/contact" element={<Contact />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>

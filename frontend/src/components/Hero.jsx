@@ -1,7 +1,9 @@
-import { FaChrome } from "react-icons/fa";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext.jsx";
 import logo from "../assets/logo.png";
+import { FaChrome } from "react-icons/fa";
 
 const ALL_FIELDS = [
   { label: "Full name", value: "Aarav Sharma", col: "half" },
@@ -42,7 +44,6 @@ const TICKER_ITEMS = [
   "⚡ 12,000+ applications filled",
   "◈ Analytics insights",
   "⬡ Community field cache",
-  "✦ Works on Workday · Greenhouse · Lever",
   "◎ 93% autofill accuracy",
 ];
 
@@ -55,6 +56,8 @@ export default function Hero() {
   const [mouse, setMouse] = useState({ x: -999, y: -999 });
   const timers = useRef([]);
   const sectionEl = useRef(null);
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   const clearAll = () => timers.current.forEach(clearTimeout);
 
@@ -163,12 +166,22 @@ export default function Hero() {
             cover letters that actually sound like you, not LinkedIn cringe.
           </p>
           <div className="mt-9 flex items-center gap-7">
-            <button className="cursor-pointer group flex items-center gap-2.5 rounded-2xl bg-[#5b3df5] px-7 py-3.5 text-[15px] font-semibold text-white shadow-[0_4px_24px_rgba(91,61,245,0.35)] transition-all duration-200 hover:bg-[#4d34d4] hover:shadow-[0_6px_28px_rgba(91,61,245,0.45)] active:scale-[0.98]">
-              <FaChrome
-                size={17}
-                className="transition-transform duration-300 group-hover:rotate-12"
-              />
-              Add to Chrome - free
+            <button
+              onClick={() => {
+                if (isAuthenticated) {
+                  navigate("/dashboard", {
+                    state: { page: "extension" },
+                  });
+                } else {
+                  navigate("/auth");
+                }
+              }}
+              className="cursor-pointer group rounded-full bg-[#602fe2] px-7 py-3 text-white font-medium transition-all duration-300 hover:scale-105 hover:bg-[#4f24c9] hover:shadow-lg"
+            >
+              <span className="flex items-center gap-2">
+                Get the Extension
+                <FaChrome className="transition-transform duration-300 group-hover:rotate-12" />
+              </span>
             </button>
             <button className="cursor-pointer flex items-center gap-1.5 text-[15px] font-medium text-gray-500 transition-colors hover:text-gray-900">
               See how it works
@@ -177,7 +190,7 @@ export default function Hero() {
           </div>
           <div className="mt-11 flex flex-wrap items-center gap-x-2 gap-y-1 text-[14px] text-gray-400">
             <span className="font-normal">Works on</span>
-            {["Workday", "Greenhouse", "Lever", "Internshala", "Naukri"].map(
+            {["Workday", "Greenhouse", "Wellfound", "Internshala", "Naukri"].map(
               (p, i, arr) => (
                 <span key={p} className="flex items-center gap-2">
                   <span className="font-semibold text-gray-800">{p}</span>
@@ -190,14 +203,11 @@ export default function Hero() {
           </div>
         </div>
 
-        {/* ── RIGHT VISUAL ── */}
         <div
           className="relative hidden shrink-0 lg:block"
           style={{ width: 560 }}
         >
-          {/* Main browser window */}
           <div className="w-full overflow-hidden rounded-[20px] border border-gray-200 bg-white shadow-[0_24px_64px_rgba(0,0,0,0.09)]">
-            {/* Title bar */}
             <div className="flex items-center gap-3 border-b border-gray-100 bg-gray-50 px-4 py-3">
               <div className="flex gap-1.5">
                 <div className="h-3 w-3 rounded-full bg-[#FF5F57]" />
@@ -372,7 +382,6 @@ export default function Hero() {
             )}
           </div>
 
-          {/* Floating — saved time */}
           <div className="absolute -left-10 top-48 flex items-center gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3.5 shadow-[0_12px_36px_rgba(0,0,0,0.09)]">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-50">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -399,7 +408,6 @@ export default function Hero() {
             </div>
           </div>
 
-          {/* Floating — status */}
           <div className="absolute -left-14 bottom-16 flex items-center gap-3 rounded-2xl border border-gray-100 bg-white px-4 py-3.5 shadow-[0_12px_36px_rgba(0,0,0,0.09)]">
             <div className="flex h-9 w-9 items-center justify-center rounded-full bg-purple-50">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -428,7 +436,6 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* ── TICKER ── */}
       <div className="relative z-10 border-t border-gray-200 bg-white/70 backdrop-blur-sm">
         <div className="overflow-hidden py-3">
           <div className="ticker flex w-max gap-10">

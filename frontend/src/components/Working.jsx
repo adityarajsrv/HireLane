@@ -13,7 +13,7 @@ const steps = [
     id: 2,
     title: "Open any job page",
     description:
-      "HireLane scans the form on the fly. Workday, Greenhouse, Lever, Naukri - fields get mapped instantly.",
+      "HireLane scans the form on the fly. Workday, Greenhouse, Wellfound, Naukri - fields get mapped instantly.",
   },
   {
     id: 3,

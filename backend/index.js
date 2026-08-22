@@ -14,6 +14,7 @@ import analyticsRoutes from "./routes/analytics.js";
 import quotaRoutes from "./routes/quota.js";
 import jdMatchRoutes from "./routes/jdmatch.js";
 import passport from "./config/passport.js";
+import contactRoutes from "./routes/contact.js";
 
 const app = express();
 
@@ -62,6 +63,7 @@ if (config.isDev) {
 app.get("/health", (_, res) => res.json({ status: "ok", ts: Date.now() }));
 
 app.use("/auth", authRoutes);
+app.use("/contact", contactRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/classify-fields", classifyRoutes);
 app.use("/api/generate-cover", coverRoutes);

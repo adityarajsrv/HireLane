@@ -281,8 +281,8 @@ function CacheCard() {
 
 const PLATFORMS = [
   { name: "Greenhouse", conv: 34 },
-  { name: "Lever", conv: 28 },
-  { name: "Ashby", conv: 51 },
+  { name: "Wellfound", conv: 28 },
+  { name: "Naukri", conv: 51 },
   { name: "Workday", conv: 19 },
 ];
 

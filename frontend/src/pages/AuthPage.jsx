@@ -453,13 +453,25 @@ export default function AuthPage() {
           setError("Passwords do not match.");
           return;
         }
+
         await register(name, email, password);
       } else {
         await login(email, password);
       }
+
       navigate("/dashboard");
     } catch (err) {
-      setError(err.response?.data?.message || "Something went wrong. Please try again.");
+      console.error("[Auth] Error:", err);
+
+      const message = err.response?.data?.message;
+
+      if (err.response?.status === 429) {
+        setError("Too many attempts. Please wait a few minutes and try again.");
+      } else if (!err.response) {
+        setError("Can't reach the server. Please check your connection.");
+      } else {
+        setError(message || "Something went wrong. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -670,6 +682,21 @@ export default function AuthPage() {
                 )}
               </div>
             )}
+            {error && (
+              <p
+                style={{
+                  fontSize: 12,
+                  fontFamily: "JetBrains Mono, monospace",
+                  color: "#e24b4a",
+                  marginBottom: 12,
+                  padding: "8px 12px",
+                  background: "#fcebeb",
+                  borderRadius: 8,
+                }}
+              >
+                {error}
+              </p>
+            )}
             <button
               type="submit"
               disabled={loading}
@@ -706,7 +733,7 @@ export default function AuthPage() {
                 </svg>
               ) : (
                 <>
-                  {isSignup ? "Create Account" : "Sign In"}{" "}
+                  {loading ? "Please wait..." : isSignup ? "Create Account" : "Sign In"}
                   <ArrowRight size={13} />
                 </>
               )}
