@@ -136,12 +136,10 @@ const init = async () => {
   atsStatus.textContent = `Detected: ${stateRes.ats}`;
   atsDot.style.background = "#1bd29c";
 
-  // Hide everything first
   startFillBtn.style.display = "none";
   trackSection.style.display = "none";
   coverLetterSection.style.display = "none";
 
-  // Route according to ATS mode
   if (stateRes.mode === "fill") {
     startFillBtn.style.display = "block";
     startFillBtn.disabled = false;
@@ -168,7 +166,6 @@ const init = async () => {
   }
 };
 
-// ── Connect using dashboard pairing code ──
 connectBtn.addEventListener("click", async () => {
   const code = pairCodeInput.value.trim();
 
@@ -229,7 +226,6 @@ pairCodeInput.addEventListener("keydown", (e) => {
   }
 });
 
-// ── Connect using dashboard pairing code ──
 connectBtn.addEventListener("click", async () => {
   const code = pairCodeInput.value.trim();
 
@@ -295,8 +291,6 @@ disconnectBtn.addEventListener("click", async () => {
   init();
 });
 
-// popup.js — update trackLogBtn's click handler to also compute a score
-
 document.getElementById("trackLogBtn").addEventListener("click", async () => {
   const company = document.getElementById("trackCompanyInput").value.trim();
   const role    = document.getElementById("trackRoleInput").value.trim();
@@ -315,10 +309,6 @@ document.getElementById("trackLogBtn").addEventListener("click", async () => {
     const tab = await getActiveTab();
     const stateRes = await chrome.tabs.sendMessage(tab.id, { action: "GET_STATE" });
 
-    // ── NEW: attempt scoring before logging, same pattern as the
-    // fill flow already uses. Naukri/Internshala JD content is
-    // usually readable directly (not hidden behind a modal), so this
-    // works without the cross-tab caching complexity Greenhouse needed.
     let matchScore = null;
     try {
       const jdRes = await chrome.tabs.sendMessage(tab.id, { action: "GET_JD_TEXT" });
@@ -332,7 +322,6 @@ document.getElementById("trackLogBtn").addEventListener("click", async () => {
         if (scoreData.success) matchScore = scoreData.score;
       }
     } catch {
-      // scoring is a nice-to-have here — tracking still proceeds without it
     }
 
     await authenticatedFetch(`${API_BASE}/api/applications`, {
@@ -343,7 +332,7 @@ document.getElementById("trackLogBtn").addEventListener("click", async () => {
         ats: stateRes.ats,
         status: "applied",
         sessionKey: stateRes.sessionKey,
-        matchScore, // ← now populated when scoring succeeds
+        matchScore,
       }),
     });
 
@@ -371,8 +360,7 @@ document.getElementById("generateCoverBtn").addEventListener("click", async () =
 
   btn.disabled = true;
   btn.textContent = "Generating...";
-  trackBtn.style.display = "none"; // hide tracking option while generating
-
+  trackBtn.style.display = "none";
   try {
     const tab = await getActiveTab();
     const stateRes = await chrome.tabs.sendMessage(tab.id, { action: "GET_STATE" });
@@ -397,8 +385,6 @@ document.getElementById("generateCoverBtn").addEventListener("click", async () =
       return;
     }
 
-    // ── NEW: also compute a match score alongside generation, using
-    // the same JD text — no reason to make two separate scrape calls
     lastGeneratedScore = null;
     if (jdRes?.jobDescription?.length > 100) {
       try {
@@ -410,7 +396,6 @@ document.getElementById("generateCoverBtn").addEventListener("click", async () =
         const scoreData = await scoreRes.json();
         if (scoreData.success) lastGeneratedScore = scoreData.score;
       } catch {
-        // non-critical
       }
     }
 
@@ -424,7 +409,7 @@ document.getElementById("generateCoverBtn").addEventListener("click", async () =
     textArea.value = coverData.coverLetter;
     textArea.style.display = "block";
     copyBtn.style.display = "block";
-    trackBtn.style.display = "block"; // ← now shown, but NOT auto-clicked
+    trackBtn.style.display = "block";
     statusEl.textContent = lastGeneratedScore
       ? `Draft ready — ${lastGeneratedScore}% match. Not tracked yet.`
       : "Draft ready. Not tracked yet.";
@@ -439,10 +424,6 @@ document.getElementById("generateCoverBtn").addEventListener("click", async () =
   }
 });
 
-// ── NEW: separate, explicit action — this is the ONLY place a
-// Wellfound application actually gets logged. Generating a draft is
-// not the same as applying; the user confirms intent with this
-// dedicated click, which is the honest UX your original design lacked.
 document.getElementById("trackWellfoundBtn").addEventListener("click", async () => {
   const trackBtn = document.getElementById("trackWellfoundBtn");
   const statusEl = document.getElementById("coverStatusEl");
@@ -470,7 +451,6 @@ document.getElementById("trackWellfoundBtn").addEventListener("click", async () 
     statusEl.textContent = "Application tracked!";
     statusEl.style.color = "#1bd29c";
     trackBtn.textContent = "Tracked ✓";
-    // Leave it disabled after success — prevents accidental duplicate logging
   } catch (err) {
     statusEl.textContent = "Error: " + err.message;
     statusEl.style.color = "#e24b4a";
